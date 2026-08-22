@@ -16,7 +16,7 @@
 }
 .sp-tab-btn {
   display:flex; align-items:center; gap:0.55rem;
-  padding:0.65rem 0.75rem; border-radius:var(--r-md);
+  padding:0.65rem 0.75rem; border-radius:0;
   border:1px solid transparent; background:transparent;
   font-size:var(--text-sm); font-weight:500; color:var(--text-muted);
   cursor:pointer; transition:all var(--t-fast); text-align:left; width:100%;
@@ -65,7 +65,7 @@
 
 .sp-status {
   margin-top:0.4rem; padding:0.42rem 0.75rem;
-  border-radius:var(--r-sm); font-size:var(--text-xs); font-weight:600;
+  border-radius:0; font-size:var(--text-xs); font-weight:600;
 }
 .sp-status.ok   { background:var(--jade-glow); color:var(--jade); border:1px solid var(--jade-dim); }
 .sp-status.fail { background:var(--accent-bg);  color:var(--accent-b); border:1px solid var(--accent-dim); }
@@ -76,7 +76,7 @@
 }
 .sp-provider-card {
   display:flex; align-items:center; gap:0.55rem;
-  padding:0.65rem 0.85rem; border-radius:var(--r-md);
+  padding:0.65rem 0.85rem; border-radius:0;
   border:1.5px solid var(--border); background:var(--surface);
   cursor:pointer; transition:all var(--t-fast); text-align:left;
   font-size:var(--text-sm); color:var(--text-muted);
@@ -98,7 +98,7 @@
 .sp-config-preview {
   margin-top:0.75rem; padding:0.85rem 1rem;
   background:var(--bg-subtle); border:1px solid var(--border);
-  border-radius:var(--r-md);
+  border-radius:0;
   display:flex; flex-direction:column; gap:0.35rem;
 }
 .sp-cfg-row {
@@ -111,7 +111,7 @@
 .sp-accent-grid { display:flex; flex-direction:column; gap:0.4rem; }
 .sp-accent-card {
   display:flex; align-items:center; gap:0.75rem;
-  padding:0.75rem 1rem; border-radius:var(--r-md);
+  padding:0.75rem 1rem; border-radius:0;
   border:1.5px solid var(--border); background:var(--surface);
   cursor:pointer; transition:all var(--t-fast); text-align:left;
   position:relative;
@@ -121,9 +121,9 @@
   border-color:var(--ac); background:color-mix(in srgb, var(--ac) 7%, transparent);
 }
 .sp-accent-dot {
-  width:20px; height:20px; border-radius:50%;
+  width:20px; height:20px; border-radius:0;
   background:var(--ac); flex-shrink:0;
-  box-shadow:0 2px 8px color-mix(in srgb, var(--ac) 40%, transparent);
+  box-shadow:none;
 }
 .sp-accent-name { font-size:var(--text-sm); font-weight:700; color:var(--text-primary); line-height:1.2; }
 .sp-accent-desc { font-size:var(--text-xs); color:var(--text-muted); font-family:var(--font-serif); }
@@ -135,7 +135,7 @@
 /* ── Theme toggle ── */
 .sp-theme-toggle { display:flex; gap:0.4rem; flex-wrap:wrap; }
 .sp-theme-btn {
-  padding:0.45rem 1rem; border-radius:var(--r-sm);
+  padding:0.45rem 1rem; border-radius:0;
   border:1.5px solid var(--border); background:var(--surface);
   font-size:var(--text-sm); cursor:pointer; color:var(--text-secondary);
   transition:all var(--t-fast); font-weight:500;

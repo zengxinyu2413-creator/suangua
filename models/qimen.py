@@ -16,7 +16,9 @@ class QimenRequest(BaseModel):
     hour:   int
     minute: int = 0
     question: str = ""
+    purpose: Optional[str] = None         # 用事类别（求财/事业/婚姻/疾病…见 PURPOSE_LOGIC），可选
     use_yang_dun: Optional[bool] = None   # None = auto-detect
+    birth_year: Optional[int] = None      # 求测人生年（定年命宫，可选）
 
 
 class PalaceCell(BaseModel):

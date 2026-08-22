@@ -430,8 +430,8 @@ def analyze_yong_shen(chart: dict) -> Dict[str, Any]:
         if tiao_hou_stem:
             from core.constants import TIANGAN_WUXING
             tiao_hou_wx = TIANGAN_WUXING.get(tiao_hou_stem, "")
-    except Exception:
-        pass
+    except Exception as _e1:
+        from core.log import log_failure; log_failure("bazi", "装配(自动补充日志)", _e1)
 
     # ── 2. 《子平真诠》格局用神 ──────────────────────────────────
     gejv_info = {}
@@ -456,16 +456,16 @@ def analyze_yong_shen(chart: dict) -> Dict[str, Any]:
                 "dislikes":  gejv_data.get("忌", []),
                 "mouth":     gejv_data.get("口诀", ""),
             }
-    except Exception:
-        pass
+    except Exception as _e2:
+        from core.log import log_failure; log_failure("bazi", "装配(自动补充日志)", _e2)
 
     # ── 3. 《滴天髓》日干特性 ─────────────────────────────────────
     shigan_info = {}
     try:
         from knowledge.bazi_classical import SHIGAN_JIJUE
         shigan_info = SHIGAN_JIJUE.get(dm, {})
-    except Exception:
-        pass
+    except Exception as _e3:
+        from core.log import log_failure; log_failure("bazi", "装配(自动补充日志)", _e3)
 
     # ── 4. 综合推断用神五行 ──────────────────────────────────────
     # 优先级：调候 > 格局 > 强弱通用

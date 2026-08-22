@@ -265,14 +265,14 @@ export default function SettingsPage() {
 function ApiSection({ urlDraft, setUrlDraft, s, notify, testApi, apiStatus }) {
   return React.createElement('div', { className: 'sp-section' },
     React.createElement('div', { className: 'sp-section-title' }, '后端 API 连接'),
-    React.createElement('div', { className: 'sp-section-desc' }, '八卦推演系统后端地址（默认本地 8888 端口）'),
+    React.createElement('div', { className: 'sp-section-desc' }, '留空 = 自动使用当前网页所在域名/端口（推荐，云端部署也无需改动）。仅当后端与前端不在同一域名/端口时才需要手动填写。'),
     React.createElement('div', { className: 'sp-field-group' },
       React.createElement('label', null, 'API 地址'),
       React.createElement('div', { className: 'sp-input-row' },
         React.createElement('input', {
           value: urlDraft,
           onChange: function(e) { setUrlDraft(e.target.value) },
-          placeholder: 'http://localhost:8888'
+          placeholder: '留空即可（同源）；如需自定义，如 http://localhost:8888'
         }),
         React.createElement('button', {
           className: 'btn btn-primary',

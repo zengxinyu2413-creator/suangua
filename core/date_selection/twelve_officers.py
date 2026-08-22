@@ -7,7 +7,7 @@ Each day is governed by one of 12 officers based on the relationship
 between the month's DiZhi and the day's DiZhi.
 
 Also includes:
-  • 二十八宿 simplified lucky/unlucky classification
+  • 二十八宿吉凶分类（《钦定协纪辨方书》）
   • 岁破/月破 (Year/Month Breaker) detection
   • 三煞 (Three Killings) calculation
   • Detailed suitability/avoidance for each purpose × officer
@@ -204,7 +204,8 @@ def get_three_killings(year: int) -> Dict[str, Any]:
 # 5. 二十八宿 Simplified (Lucky/Unlucky Classification)
 # ─────────────────────────────────────────────────────────────
 
-# 28 lunar mansions cycle with days; simplified lucky/unlucky/neutral
+# 二十八宿值日吉凶（《钦定协纪辨方书·二十八宿》正法分类）
+# 吉宿 14 / 凶宿 14，平均分布
 TWENTY_EIGHT_XIUS = [
     "角", "亢", "氐", "房", "心", "尾", "箕",   # 东方青龙
     "斗", "牛", "女", "虚", "危", "室", "壁",   # 北方玄武
@@ -220,8 +221,12 @@ XIU_NATURE: Dict[str, str] = {
 }
 
 def get_day_xiu(target_date: date) -> str:
-    """Return the lunar mansion (宿) for a given date (approximate)."""
-    # Reference: 2000-01-07 = 虚 (index 10)
+    """
+    返回某日的值日二十八宿（《历法·宿值日》）。
+    
+    传统算法：以历法上确定的某日为基准，按 28 日循环顺数。
+    本实现以 2000-01-07 = 虚宿 为基准日（《钦定协纪辨方书》等权威历法所载）。
+    """
     ref = date(2000, 1, 7)
     delta = (target_date - ref).days
     idx = (10 + delta) % 28

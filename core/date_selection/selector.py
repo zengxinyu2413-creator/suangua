@@ -331,7 +331,13 @@ def select_dates(
     birth_month: Optional[int] = None,
     birth_day: Optional[int] = None,
 ) -> Dict[str, Any]:
-    month_zhi = _MONTH_TO_DIZHI[(month - 1) % 12]
+    # 月支（月建）一律走历法底座（节气月支），杜绝自造转换。
+    # 旧法 _MONTH_TO_DIZHI[(month-1)%12] 以日历月号当农历月，于公历月则错。
+    def _solar_month_zhi(dt) -> str:
+        from core.calendar.solar_terms import month_dizhi_at
+        from datetime import datetime as _dtm
+        return month_dizhi_at(_dtm(dt.year, dt.month, dt.day))
+
     year_zhi  = _get_year_zhi(year)
 
     birth_zhi: Optional[str] = None
@@ -342,42 +348,47 @@ def select_dates(
             bd = _date(birth_year, birth_month, birth_day)
             bd_delta = (bd - _REF_DATE).days
             _, birth_zhi = ganzhi_from_index((_REF_DAY_IDX + bd_delta) % 60)
-        except Exception:
-            pass
+        except Exception as _e1:
+            from core.log import log_failure; log_failure("date_selection", "装配(自动补充日志)", _e1)
 
     start = date(year, month, 1)
     end   = date(year, month + 1, 1) if month < 12 else date(year + 1, 1, 1)
 
+    # 代表月支（输出用）：取月中之日的节气月支
+    mid = date(year, month, 15)
+    month_zhi = _solar_month_zhi(mid)
+
     all_days: List[Dict[str, Any]] = []
     d = start
     while d < end:
-        rec = _build_day(d, purpose, month, month_zhi, year, year_zhi, birth_zhi)
+        day_month_zhi = _solar_month_zhi(d)   # 逐日月建（节气处转）
+        rec = _build_day(d, purpose, month, day_month_zhi, year, year_zhi, birth_zhi)
         all_days.append(rec)
         d += timedelta(days=1)
 
-    auspicious   = [x for x in all_days if x["score"] >= 3]
+    # 岁破/月破 铁规：无论任何加分因素，此两日绝对不列入吉日
+    auspicious   = [x for x in all_days
+                    if x["score"] >= 3
+                    and not x.get("is_year_breaker")   # 岁破硬排除
+                    and not x.get("is_month_breaker")]  # 月破硬排除
     inauspicious = [x for x in all_days if x["score"] <= -2]
     best_days    = sorted(auspicious, key=lambda x: x["score"], reverse=True)[:3]
 
     tk = get_three_killings(year)
     three_killings_str = f"{tk.get('direction','未知')}方（{tk.get('desc','')}）"
 
-    # Get solar terms this month via lunar-python
+    # Get solar terms this month（节气名一律走历法底座 solar_term_on，杜绝自造索引对齐）
     try:
-        ly = LunarYear.fromYear(year)
-        jq_jd = ly.getJieQiJulianDays()
-        from lunar_python import Solar as LSolar
-        JIE_QI_NAMES = [
-            "小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨",
-            "立夏","小满","芒种","夏至","小暑","大暑","立秋","处暑",
-            "白露","秋分","寒露","霜降","立冬","小雪","大雪","冬至",
-        ]
+        from core.calendar.solar_terms import solar_term_on
+        from datetime import date as _date2, timedelta as _td2, datetime as _dtm2
         month_jieqi = []
-        for i, jd in enumerate(jq_jd):
-            if i >= len(JIE_QI_NAMES): break
-            s = LSolar.fromJulianDay(jd)
-            if s.getYear() == year and s.getMonth() == month:
-                month_jieqi.append(f"{JIE_QI_NAMES[i]} {s.toYmd()}")
+        dd = _date2(year, month, 1)
+        _end = _date2(year, month + 1, 1) if month < 12 else _date2(year + 1, 1, 1)
+        while dd < _end:
+            jq = solar_term_on(_dtm2(dd.year, dd.month, dd.day))
+            if jq:
+                month_jieqi.append(f"{jq} {dd.isoformat()}")
+            dd += _td2(days=1)
     except Exception:
         month_jieqi = []
 

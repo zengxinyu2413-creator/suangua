@@ -38,6 +38,19 @@ NAJIA_BRANCHES: Dict[str, Dict[str, List[str]]] = {
     "兑": {"inner": ["巳", "未", "酉"], "outer": ["亥", "丑", "卯"]},   # 丁
 }
 
+# 纳甲天干（京房纳甲）：乾纳甲壬·坤纳乙癸（内外异干），余六卦内外同干。
+#   内卦（下三爻）取 inner 干，外卦（上三爻）取 outer 干。
+NAJIA_STEMS: Dict[str, Dict[str, str]] = {
+    "乾": {"inner": "甲", "outer": "壬"},
+    "坤": {"inner": "乙", "outer": "癸"},
+    "震": {"inner": "庚", "outer": "庚"},
+    "巽": {"inner": "辛", "outer": "辛"},
+    "坎": {"inner": "戊", "outer": "戊"},
+    "离": {"inner": "己", "outer": "己"},
+    "艮": {"inner": "丙", "outer": "丙"},
+    "兑": {"inner": "丁", "outer": "丁"},
+}
+
 # Palace (宫) element for six-relative calculation
 PALACE_ELEMENT: Dict[str, str] = {
     "乾": "金", "兑": "金",
@@ -118,12 +131,12 @@ LIU_SHEN_START: Dict[str, int] = {
 }
 
 LIU_SHEN_MEANINGS: Dict[str, Dict[str, str]] = {
-    "青龙": {"nature": "吉", "color": "#27ae60", "desc": "青龙主吉，利贵人、喜庆、财帛"},
-    "朱雀": {"nature": "凶", "color": "#e74c3c", "desc": "朱雀主口舌、文书、争讼"},
-    "勾陈": {"nature": "凶", "color": "#f39c12", "desc": "勾陈主拖延、田土、官非"},
-    "腾蛇": {"nature": "凶", "color": "#9b59b6", "desc": "腾蛇主惊恐、虚惊、怪异之事"},
-    "白虎": {"nature": "凶", "color": "#e74c3c", "desc": "白虎主凶险、疾病、血光、丧事"},
-    "玄武": {"nature": "凶", "color": "#34495e", "desc": "玄武主盗贼、暗昧、色情、欺诈"},
+    "青龙": {"nature": "吉", "color": "#27ae60", "desc": "青龙主吉庆、贵人、婚姻喜事、酒食、贵气、文采"},
+    "朱雀": {"nature": "凶", "color": "#e74c3c", "desc": "朱雀主口舌、文书、信息消息、争讼、是非"},
+    "勾陈": {"nature": "凶", "color": "#f39c12", "desc": "勾陈主勾连、田土、迟滞、牵绊、契约纠纷、缓慢之事"},
+    "腾蛇": {"nature": "凶", "color": "#9b59b6", "desc": "腾蛇主虚惊、怪异、梦幻、神秘事、心神不宁、缠绕"},
+    "白虎": {"nature": "凶", "color": "#e74c3c", "desc": "白虎主凶险、疾病、血光、丧事、刀剑、武职"},
+    "玄武": {"nature": "凶", "color": "#34495e", "desc": "玄武主盗贼、暗昧、私情、奸邪、欺诈、暗中之事"},
 }
 
 def assign_liu_shen(day_stem: str) -> List[str]:
@@ -147,33 +160,33 @@ LIU_QIN_NAMES = {
 LIU_QIN_MEANINGS: Dict[str, Dict[str, str]] = {
     "父母": {
         "nature": "中", "color": "#8e44ad",
-        "meaning": "主文书、父母、屋宅、官方文件、知识",
-        "favorable_for": "求学、考试、签合同、官方审批",
-        "unfavorable_for": "求子（克子孙爻）、婚姻（有耗泄）",
+        "meaning": "主文书印信、父母长辈、车船房屋、官方文件、学业知识",
+        "favorable_for": "求学考试（父母为文书）、签合同、官方审批、占父母安康",
+        "unfavorable_for": "占子嗣（父母克子孙）、占求财（财克父母反伤）、夏占父母不利",
     },
     "兄弟": {
         "nature": "凶", "color": "#e67e22",
-        "meaning": "主竞争、兄弟、朋友、阻碍财路",
-        "favorable_for": "求助朋友、合作共事",
-        "unfavorable_for": "求财（克妻财爻）、婚姻（兄弟争财）",
+        "meaning": "主兄弟姐妹、朋友同事、竞争对手、阻财、夺财",
+        "favorable_for": "求助同辈、合作共事（兄弟比和）、占兄弟安康",
+        "unfavorable_for": "求财（兄弟克妻财，主破财）、占婚姻（兄弟夺财，财不归我）、占父母（兄弟生子孙、子孙克官，妨碍）",
     },
     "子孙": {
         "nature": "吉", "color": "#27ae60",
-        "meaning": "主福德、子女、医药、享乐、化解凶象",
-        "favorable_for": "求医问药、生育、官司中（克官鬼）",
-        "unfavorable_for": "功名（克官鬼）、官职",
+        "meaning": "主子女晚辈、福德、医药、僧道、六畜、忧愁解、化解凶煞",
+        "favorable_for": "求医问药（子孙为药）、占子嗣、占六畜、官司中得救（子孙克官鬼）",
+        "unfavorable_for": "占功名（子孙克官鬼，损功名）、占求官（同上）、女占夫病忌子孙动（克夫）",
     },
     "妻财": {
         "nature": "吉", "color": "#f1c40f",
-        "meaning": "主财帛、妻妾（男性）、食物、日常所需",
-        "favorable_for": "求财、经商、饮食",
-        "unfavorable_for": "考功名（财克印）、父母病（财克父母）",
+        "meaning": "主财帛、男占妻妾、食物日用、奴仆、货物",
+        "favorable_for": "求财、经商、嫁娶（男占以财为妻）、占奴仆",
+        "unfavorable_for": "占父母病（妻财克父母）、考功名（财克印信文书）、占求学（财动伤父母印星）",
     },
     "官鬼": {
         "nature": "中", "color": "#c0392b",
-        "meaning": "主官职、功名、丈夫（女性）、疾病、灾祸",
-        "favorable_for": "求官职、女性求婚配、诉讼中有力",
-        "unfavorable_for": "求健康（为疾病爻）、求财（官鬼克兄弟不直接助财）",
+        "meaning": "主官职功名、女占丈夫、疾病鬼祟、灾祸盗贼、雷火",
+        "favorable_for": "求官求职（官为功名）、女占婚（官鬼为夫）、官司中（求官鬼旺主胜）、占贵人",
+        "unfavorable_for": "占身体疾病（官鬼为病符）、占兄弟（官鬼克兄弟）、占行人（官鬼临身主灾）",
     },
 }
 
@@ -228,7 +241,10 @@ def get_kong_wang(day_ganzhi_index: int) -> List[str]:
 #    Already in constants; expose convenience function here.
 # ─────────────────────────────────────────────────────────────
 
-from core.constants import get_wuxing_strength as _get_wx_strength
+from core.constants import (
+    get_wuxing_strength as _get_wx_strength_qishi,
+    get_wuxing_strength_strict as _get_wx_strength,
+)
 
 STRENGTH_LABELS = {
     "旺": {"label": "旺", "color": "#e74c3c", "desc": "当令最旺，力量最强"},
@@ -239,7 +255,18 @@ STRENGTH_LABELS = {
 }
 
 def get_line_strength(line_zhi: str, month_zhi: str) -> Dict[str, str]:
-    """Return strength info for a line in the current month."""
+    """
+    Return strength info for a line in the current month.
+    
+    使用《增删卜易》《卜筮正宗》六爻传统四时旺相休囚死表（严格派）：
+      春（寅卯辰）：木旺、火相、水休、金囚、土死
+      夏（巳午未）：火旺、土相、木休、水囚、金死
+      秋（申酉戌）：金旺、水相、土休、火囚、木死
+      冬（亥子丑）：水旺、木相、金休、土囚、火死
+    
+    注意：八字"气势派"在辰戌丑未四季月有差异，但六爻论旺衰
+    严格按节气月令地支当令五行论，不考虑藏干。
+    """
     wx = DIZHI_WUXING.get(line_zhi, "土")
     s = _get_wx_strength(wx, month_zhi)
     return STRENGTH_LABELS.get(s, {"label": s, "color": "#95a5a6", "desc": ""})
@@ -275,6 +302,23 @@ def annotate_with_najia(
 
     yaos = result.get("yaos", [])
     enriched_yaos = []
+    
+    # 计算变卦的爻支（如果有变卦）
+    changed_branches = [""] * 6
+    changed_stems = [""] * 6
+    changed_hex = result.get("changed")
+    if changed_hex:
+        changed_lower = changed_hex.get("lower", {}).get("name", lower_trigram)
+        changed_upper = changed_hex.get("upper", {}).get("name", upper_trigram)
+        for i in range(6):
+            if i < 3:
+                ch_branches = NAJIA_BRANCHES.get(changed_lower, {}).get("inner", ["",""])
+                changed_branches[i] = ch_branches[i] if i < len(ch_branches) else ""
+                changed_stems[i] = NAJIA_STEMS.get(changed_lower, {}).get("inner", "")
+            else:
+                ch_branches = NAJIA_BRANCHES.get(changed_upper, {}).get("outer", ["",""])
+                changed_branches[i] = ch_branches[i - 3] if (i - 3) < len(ch_branches) else ""
+                changed_stems[i] = NAJIA_STEMS.get(changed_upper, {}).get("outer", "")
 
     for i, yao in enumerate(yaos):
         pos = i + 1  # 1-indexed
@@ -282,9 +326,11 @@ def annotate_with_najia(
         if pos <= 3:
             trigram = lower_trigram
             branch = NAJIA_BRANCHES.get(trigram, {}).get("inner", ["子","寅","辰"])[i]
+            stem = NAJIA_STEMS.get(trigram, {}).get("inner", "")
         else:
             trigram = upper_trigram
             branch = NAJIA_BRANCHES.get(trigram, {}).get("outer", ["午","申","戌"])[i - 3]
+            stem = NAJIA_STEMS.get(trigram, {}).get("outer", "")
 
         wx = DIZHI_WUXING.get(branch, "土")
         liu_qin = get_liu_qin(palace_trig, branch)
@@ -293,10 +339,21 @@ def annotate_with_najia(
         strength = get_line_strength(branch, month_zhi)
         is_world = (pos == world_pos)
         is_application = (pos == app_pos)
+        
+        # 化爻地支（仅在动爻上有意义；静爻 changed_branch 即为本爻）
+        is_changing = yao.get("is_changing", False)
+        changed_branch = changed_branches[i] if is_changing else ""
+        changed_stem = changed_stems[i] if is_changing else ""
+        # 计算变爻的六亲（动爻变出后的六亲）
+        changed_liu_qin = ""
+        if is_changing and changed_branch:
+            changed_liu_qin = get_liu_qin(palace_trig, changed_branch)
 
         enriched_yaos.append({
             **yao,
+            "stem": stem,                        # 纳甲天干
             "branch": branch,
+            "ganzhi": f"{stem}{branch}",         # 纳甲干支（如「甲子」）
             "element": wx,
             "liu_qin": liu_qin,
             "liu_shen": liu_shen,
@@ -306,6 +363,10 @@ def annotate_with_najia(
             "strength": strength,
             "is_world": is_world,
             "is_application": is_application,
+            "changed_stem": changed_stem,
+            "changed_branch": changed_branch,
+            "changed_ganzhi": (f"{changed_stem}{changed_branch}" if changed_branch else ""),
+            "changed_liu_qin": changed_liu_qin,
         })
 
     result["yaos"] = enriched_yaos
@@ -315,6 +376,41 @@ def annotate_with_najia(
     result["palace_trigram"] = palace_trig
     result["palace_element"] = PALACE_ELEMENT.get(palace_trig, "金")
     result["najia_summary"] = _build_najia_summary(enriched_yaos, world_pos, app_pos, kong_wang_branches)
+
+    # ── 六合/六冲卦型精确判断 ───────────────────────────────────────────────
+    # 六合: 各爻地支两两相合 (子丑/寅亥/卯戌/辰酉/巳申/午未)
+    # 六冲: 各爻地支两两相冲 (子午/丑未/寅申/卯酉/辰戌/巳亥)
+    _LIUHE_PAIRS  = {("子","丑"),("寅","亥"),("卯","戌"),("辰","酉"),("巳","申"),("午","未")}
+    _LIUHE_PAIRS |= {(b,a) for a,b in _LIUHE_PAIRS}
+
+    branches = [y.get("branch","") for y in enriched_yaos]
+    # Six-harmony: check if all 6 branches form 3 合 pairs
+    if len(branches) == 6:
+        b_set = list(branches)
+        he_pairs = 0
+        chong_pairs = 0
+        for i in range(3):
+            pair = (b_set[i], b_set[i+3])  # 初↔四, 二↔五, 三↔六 positions
+            rev  = (pair[1], pair[0])
+            if pair in _LIUHE_PAIRS or rev in _LIUHE_PAIRS:
+                he_pairs += 1
+            # 六冲 check
+            from core.constants import LIUCHONG
+            if LIUCHONG.get(b_set[i]) == b_set[i+3]:
+                chong_pairs += 1
+
+        hex_type_enriched = result.get("hex_type", "")
+        if he_pairs == 3:
+            hex_type_enriched = "六合卦"
+        elif chong_pairs == 3:
+            hex_type_enriched = "六冲卦"
+        if hex_type_enriched:
+            result["hex_type"] = hex_type_enriched
+
+    # ── 三合局 / 三会方 / 半三合 检测（古书《增删卜易·三合局》）──────────
+    sanhe_result = detect_sanhe_sanhui(enriched_yaos)
+    result["sanhe_sanhui"] = sanhe_result
+
     return result
 
 
@@ -351,4 +447,263 @@ def _build_najia_summary(yaos: List[Dict], world: int, application: int, kong: L
         "kong_desc": kong_desc,
         "active_liu_qin": active_liu_qin,
         "changing_count": len(changing),
+    }
+
+
+# ─────────────────────────────────────────────────────────────
+# 化气分析 (Complete Transformation Analysis)
+# ─────────────────────────────────────────────────────────────
+
+# 入墓地支表 (which branches are 墓库 for each element)
+_MU_KU: Dict[str, str] = {
+    "木": "未", "火": "戌", "金": "丑", "水": "辰", "土": "戌",
+}
+
+# 十二长生 顺序 (阳干 顺行)
+_CHANGSHENG_ORDER = ["长生","沐浴","冠带","临官","帝旺","衰","病","死","墓","绝","胎","养"]
+
+def _get_wuxing(zhi: str) -> str:
+    """Get the primary wuxing for a DiZhi."""
+    ZHI_WX = {
+        "子":"水","丑":"土","寅":"木","卯":"木","辰":"土","巳":"火",
+        "午":"火","未":"土","申":"金","酉":"金","戌":"土","亥":"水",
+    }
+    return ZHI_WX.get(zhi, "")
+
+
+def analyze_hua_qi(yao: Dict[str, Any], changed_yao: Dict[str, Any],
+                   kong_wang: List[str], month_zhi: str) -> Dict[str, str]:
+    """
+    Analyze the transformation quality of a moving yao.
+    
+    Returns dict with keys:
+        hua_type: '化进神'|'化退神'|'化绝'|'化墓'|'化空'|'化破'|'化回头生'|'化回头克'|''
+        hua_desc: Chinese description
+        severity: 'auspicious'|'inauspicious'|'neutral'
+    """
+    orig_zhi    = yao.get("branch", "")
+    changed_zhi = changed_yao.get("branch", "")
+    orig_wx     = _get_wuxing(orig_zhi)
+    changed_wx  = _get_wuxing(changed_zhi)
+
+    if not orig_zhi or not changed_zhi:
+        return {"hua_type": "", "hua_desc": "", "severity": "neutral"}
+
+    # 化空 — 变爻落入旬空
+    if changed_zhi in kong_wang:
+        return {
+            "hua_type": "化空",
+            "hua_desc": f"动爻化空（{changed_zhi}入旬空），有始无终，事难成",
+            "severity": "inauspicious",
+        }
+
+    # 化破 — 变爻与月建相冲
+    from core.constants import LIUCHONG
+    if changed_zhi == LIUCHONG.get(month_zhi, ""):
+        return {
+            "hua_type": "化破",
+            "hua_desc": f"动爻化破（{changed_zhi}冲月建{month_zhi}），功败垂成",
+            "severity": "inauspicious",
+        }
+
+    # 化墓 — 变爻五行入墓
+    mu_zhi = _MU_KU.get(orig_wx, "")
+    if changed_zhi == mu_zhi:
+        return {
+            "hua_type": "化墓",
+            "hua_desc": f"动爻化墓（{orig_wx}墓于{mu_zhi}），用神入墓难发，须冲墓方出",
+            "severity": "inauspicious",
+        }
+
+    # 化绝 — 变爻五行处于绝地
+    # 绝: 每五行在特定地支绝灭
+    _JUE_ZHI = {"木":"申","火":"亥","土":"亥","金":"寅","水":"巳"}
+    if changed_zhi == _JUE_ZHI.get(orig_wx, ""):
+        return {
+            "hua_type": "化绝",
+            "hua_desc": f"动爻化绝（{orig_wx}绝于{changed_zhi}），力量瓦解，所谋必败",
+            "severity": "inauspicious",
+        }
+
+    # 化回头克 — 变爻五行克动爻五行
+    from core.constants import WUXING_KE
+    if WUXING_KE.get(changed_wx, "") == orig_wx:
+        return {
+            "hua_type": "化回头克",
+            "hua_desc": f"回头克（{changed_wx}克{orig_wx}），大凶，事必反",
+            "severity": "inauspicious",
+        }
+
+    # 化回头生 — 变爻五行生动爻五行
+    from core.constants import WUXING_SHENG
+    if WUXING_SHENG.get(changed_wx, "") == orig_wx:
+        return {
+            "hua_type": "化回头生",
+            "hua_desc": f"回头生（{changed_wx}生{orig_wx}），大吉，事必成",
+            "severity": "auspicious",
+        }
+
+    # 化进神 / 化退神
+    # 古书《增删卜易》《卜筮正宗》：进退神为"同五行地支递进/递退"
+    #   进神（四正）: 寅→卯木, 巳→午火, 申→酉金, 亥→子水
+    #   退神（四正）: 卯→寅木, 午→巳火, 酉→申金, 子→亥水
+    # （注：四库土"辰丑戌未"按部分流派轮转进退；严格派认为土不进不退）
+    _JIN_SHEN_MAP = {
+        "寅":"卯", "巳":"午", "申":"酉", "亥":"子",   # 四正进神
+        "辰":"丑", "丑":"戌", "戌":"未", "未":"辰",   # 四库土进神（部分流派）
+    }
+    _TUI_SHEN_MAP = {v: k for k, v in _JIN_SHEN_MAP.items()}
+    if _JIN_SHEN_MAP.get(orig_zhi) == changed_zhi:
+        return {
+            "hua_type": "化进神",
+            "hua_desc": f"化进神（{orig_zhi}→{changed_zhi}），气势渐增，所问之事向前发展，利于动进",
+            "severity": "auspicious",
+        }
+    if _TUI_SHEN_MAP.get(orig_zhi) == changed_zhi:
+        return {
+            "hua_type": "化退神",
+            "hua_desc": f"化退神（{orig_zhi}→{changed_zhi}），气势渐衰，所问之事退缩不前，不利进取",
+            "severity": "inauspicious",
+        }
+
+    return {"hua_type": "", "hua_desc": "变爻五行中性变化，结合整体卦象论断", "severity": "neutral"}
+
+
+# ─────────────────────────────────────────────────────────────
+# 9. 三合局 / 三会局 / 半三合 检测
+# ─────────────────────────────────────────────────────────────
+#
+# 古书《增删卜易·三合局》《卜筮正宗·三合三会》：
+#
+# 三合局（地支三合，五行成局）：
+#   申子辰水局
+#   亥卯未木局
+#   寅午戌火局
+#   巳酉丑金局
+#
+# 三会方（地支三会，方向成方）：
+#   亥子丑北方水会
+#   寅卯辰东方木会
+#   巳午未南方火会
+#   申酉戌西方金会
+#
+# 半三合（缺一字，但有"长生 + 帝旺"或"帝旺 + 墓库"）：
+#   申子=半三合水（长生+帝旺）
+#   子辰=半三合水（帝旺+墓库）
+#   申辰=拱合水（弱）
+#   类推其他局
+#
+# 应用：
+#   1) 三合/三会同时成立，五行力量大增，原神得力
+#   2) 半三合次之
+#   3) 三合/三会需要"局中之爻动"才生效（古书《增删卜易》："静则不应"）
+# ─────────────────────────────────────────────────────────────
+
+SANHE_JU = {
+    frozenset(["申","子","辰"]): "水局",
+    frozenset(["亥","卯","未"]): "木局",
+    frozenset(["寅","午","戌"]): "火局",
+    frozenset(["巳","酉","丑"]): "金局",
+}
+
+SANHUI_FANG = {
+    frozenset(["亥","子","丑"]): "北方水会",
+    frozenset(["寅","卯","辰"]): "东方木会",
+    frozenset(["巳","午","未"]): "南方火会",
+    frozenset(["申","酉","戌"]): "西方金会",
+}
+
+# 半三合（长生 + 帝旺 或 帝旺 + 墓库）
+BAN_SANHE = {
+    # 水局：申(长生)、子(帝旺)、辰(墓库)
+    frozenset(["申","子"]): "半三合水（长生+帝旺，力较强）",
+    frozenset(["子","辰"]): "半三合水（帝旺+墓库，力较强）",
+    # 木局：亥(长生)、卯(帝旺)、未(墓库)
+    frozenset(["亥","卯"]): "半三合木（长生+帝旺）",
+    frozenset(["卯","未"]): "半三合木（帝旺+墓库）",
+    # 火局：寅(长生)、午(帝旺)、戌(墓库)
+    frozenset(["寅","午"]): "半三合火（长生+帝旺）",
+    frozenset(["午","戌"]): "半三合火（帝旺+墓库）",
+    # 金局：巳(长生)、酉(帝旺)、丑(墓库)
+    frozenset(["巳","酉"]): "半三合金（长生+帝旺）",
+    frozenset(["酉","丑"]): "半三合金（帝旺+墓库）",
+}
+
+
+def detect_sanhe_sanhui(yaos: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    检测卦中是否形成三合局或三会局。
+    
+    Args:
+        yaos: enrich 过的 6 爻列表（含 branch 字段）
+    
+    Returns:
+        {
+            'sanhe':       [{'positions': [1,3,5], 'branches':['申','子','辰'], 'name':'水局'}, ...],
+            'sanhui':      [...同上],
+            'ban_sanhe':   [...半三合],
+            'summary':     "本卦构成 X 局"
+        }
+    """
+    branches = [(i+1, y.get("branch", "")) for i, y in enumerate(yaos)]
+    
+    # 全三合
+    sanhe_found = []
+    for combo in [(0,1,2),(0,1,3),(0,1,4),(0,1,5),(0,2,3),(0,2,4),(0,2,5),
+                  (0,3,4),(0,3,5),(0,4,5),(1,2,3),(1,2,4),(1,2,5),(1,3,4),
+                  (1,3,5),(1,4,5),(2,3,4),(2,3,5),(2,4,5),(3,4,5)]:
+        positions = [branches[i][0] for i in combo]
+        zhis = [branches[i][1] for i in combo]
+        if "" in zhis: continue
+        key = frozenset(zhis)
+        if len(key) != 3:  # 重复地支不算
+            continue
+        if key in SANHE_JU:
+            sanhe_found.append({
+                "positions": positions,
+                "branches": zhis,
+                "name": SANHE_JU[key],
+            })
+        elif key in SANHUI_FANG:
+            sanhe_found.append({
+                "positions": positions,
+                "branches": zhis,
+                "name": SANHUI_FANG[key],
+                "is_sanhui": True,
+            })
+    
+    # 半三合（仅在没有全三合时才看）
+    ban_found = []
+    if not sanhe_found:
+        for i, (p1, z1) in enumerate(branches):
+            for p2, z2 in branches[i+1:]:
+                if not z1 or not z2 or z1 == z2:
+                    continue
+                key = frozenset([z1, z2])
+                if key in BAN_SANHE:
+                    ban_found.append({
+                        "positions": [p1, p2],
+                        "branches": [z1, z2],
+                        "name": BAN_SANHE[key],
+                    })
+    
+    # 分类
+    full_sanhe = [x for x in sanhe_found if not x.get("is_sanhui")]
+    sanhui     = [x for x in sanhe_found if x.get("is_sanhui")]
+    
+    summary_parts = []
+    if full_sanhe:
+        summary_parts.append("三合局：" + "、".join(x["name"] for x in full_sanhe))
+    if sanhui:
+        summary_parts.append("三会方：" + "、".join(x["name"] for x in sanhui))
+    if ban_found:
+        summary_parts.append(f"半三合 {len(ban_found)} 组")
+    if not summary_parts:
+        summary_parts.append("无三合三会")
+    
+    return {
+        "sanhe":     full_sanhe,
+        "sanhui":    sanhui,
+        "ban_sanhe": ban_found,
+        "summary":   "；".join(summary_parts),
     }

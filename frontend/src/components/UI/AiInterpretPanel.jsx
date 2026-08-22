@@ -10,6 +10,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react'
 import { useSettingsStore } from '../../store/settingsStore'
+import StructuredAiOutput from './StructuredAiOutput'
 
 const PROVIDER_DEFAULTS = {
   anthropic: 'claude-sonnet-4-6',
@@ -21,6 +22,13 @@ const PROVIDER_DEFAULTS = {
 const MODULE_LABELS = {
   bazi:      '八字命理',
   liuyao:    '六爻卦象',
+  liuyao_audit: '一致性审定',
+  bazi_audit: '命局审定',
+  ziwei_audit: '命盘审定',
+  qimen_audit: '局势审定',
+  xuankong_audit: '宅运审定',
+  zeri_audit: '选期审定',
+  yangzhai_audit: '宅相审定',
   qimen:     '奇门遁甲',
   fengshui:  '八宅风水',
   date:      '择日选时',
@@ -187,26 +195,39 @@ export default function AiInterpretPanel({ module, data, extraContext = '', disa
             </div>
           )}
 
-          {/* Streaming text */}
+          {/* Streaming text — ziwei 模块用结构化渲染，其他模块用 plain text */}
           {(text || streaming) && (
-            <div ref={textRef} style={{
-              padding:'1rem 1.25rem',
-              maxHeight:'400px', overflowY:'auto',
-              fontSize:'var(--text-base)', lineHeight:'1.85',
-              color:'var(--text-secondary)', fontFamily:'var(--font-serif)',
-              whiteSpace:'pre-wrap', wordBreak:'break-word',
-            }}>
-              {text}
-              {streaming && (
-                <span style={{
-                  display:'inline-block', width:'2px', height:'1em',
-                  background:'var(--accent)', marginLeft:'2px', verticalAlign:'text-bottom',
-                  animation:'blink-cursor 0.8s step-end infinite',
-                }}>
-                  <style>{`@keyframes blink-cursor{0%,100%{opacity:1}50%{opacity:0}}`}</style>
-                </span>
-              )}
-            </div>
+            module === 'ziwei' ? (
+              <StructuredAiOutput
+                text={text}
+                streaming={streaming}
+                onCitationClick={(section, item) => {
+                  // 触发自定义事件，让 ZiWeiPage 监听
+                  window.dispatchEvent(new CustomEvent('ziwei:citation-click', {
+                    detail: { section, item }
+                  }))
+                }}
+              />
+            ) : (
+              <div ref={textRef} style={{
+                padding:'1rem 1.25rem',
+                maxHeight:'400px', overflowY:'auto',
+                fontSize:'var(--text-base)', lineHeight:'1.85',
+                color:'var(--text-secondary)', fontFamily:'var(--font-serif)',
+                whiteSpace:'pre-wrap', wordBreak:'break-word',
+              }}>
+                {text}
+                {streaming && (
+                  <span style={{
+                    display:'inline-block', width:'2px', height:'1em',
+                    background:'var(--accent)', marginLeft:'2px', verticalAlign:'text-bottom',
+                    animation:'blink-cursor 0.8s step-end infinite',
+                  }}>
+                    <style>{`@keyframes blink-cursor{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+                  </span>
+                )}
+              </div>
+            )
           )}
 
           {/* Ask a follow-up question */}

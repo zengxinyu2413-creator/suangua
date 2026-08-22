@@ -32,6 +32,10 @@ class HexagramModel(BaseModel):
 class DivinationRequest(BaseModel):
     method:    str   = Field("coin", description="coin | yarrow | time | manual")
     question:  str   = Field("", description="占卜问题")
+    topic:     Optional[str] = Field(None, description="显式指定占卜主题（求财/求官仕途/婚姻感情/考试功名/求医疾病/出行远行/官司诉讼/求子嗣等），优先于 question 关键词匹配")
+    gender:    str   = Field("male", description="占者性别: male(男) | female(女)")
+    # 代占(proxy divination): 为他人代占时设置
+    is_proxy:  bool  = Field(False, description="是否为他人代占")
     # For manual method: provide 6 yao values (6/7/8/9 from bottom to top)
     yao_values: Optional[List[int]] = Field(None, description="手动输入六爻值 [6/7/8/9] ×6")
     # For time method

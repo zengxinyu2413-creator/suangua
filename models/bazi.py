@@ -23,6 +23,12 @@ class BaziRequest(BaseModel):
     gender: str  = Field("male", description="male | female")
     name:   Optional[str] = None
     use_true_solar_time: bool = Field(False, description="使用真太阳时")
+    # ── Lunar calendar fields ──────────────────────────────────
+    is_lunar:      bool = Field(True,  description="输入日期为农历（默认）")
+    is_leap_month: bool = Field(False, description="农历闰月")
+    # ── Birthplace ─────────────────────────────────────────────
+    province: Optional[str] = Field(None, description="出生省份")
+    city:     Optional[str] = Field(None, description="出生城市")
 
     @field_validator("gender")
     @classmethod
@@ -41,6 +47,7 @@ class FortuneRequest(BaseModel):
     birth: BaziRequest
     query_year:  Optional[int] = None
     query_month: Optional[int] = None
+    query_day:   Optional[int] = None
 
 
 # ──────────────────────────────────────────────

@@ -1,4 +1,4 @@
-# 八卦推演 Frontend
+# 中国术数平台 Frontend
 
 React + Vite frontend for the Chinese metaphysics platform.
 

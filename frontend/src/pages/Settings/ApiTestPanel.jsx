@@ -160,7 +160,7 @@ export default function ApiTestPanel() {
           background:'var(--red-glow)', border:'1px solid rgba(200,64,42,0.3)',
           borderRadius:'var(--r-sm)', fontSize:'var(--text-sm)', color:'var(--text-secondary)',
           fontFamily:'var(--font-serif)', lineHeight:1.7 }}>
-          常见排查：① 确认 start.bat 已启动且后端显示"API is up" ② AI顾问测试需先在上方配置 API Key ③ 检查防火墙是否阻止 8888 端口
+          常见排查：① 确认后端服务已启动 ② AI顾问测试需先在上方配置 API Key ③ 若前后端不同源，请到"API 连接"中手动填写后端地址
         </div>
       )}
     </div>

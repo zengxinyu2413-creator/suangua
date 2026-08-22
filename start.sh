@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# start.sh — 八卦推演 One-click launcher
+# start.sh — 中国术数平台 One-click launcher
 # =============================================================================
 # Usage:
 #   ./start.sh          — start both backend + frontend (dev mode)
@@ -96,6 +96,9 @@ install_frontend() {
   info "Installing Node dependencies..."
   cd "$FRONTEND_DIR"
   npm install --silent
+  # 自动修复 dev 依赖漏洞（vite/postcss 等），无破坏性
+  info "Running npm audit fix (non-breaking security updates)..."
+  npm audit fix --silent 2>/dev/null || true
   log "Frontend dependencies installed"
 }
 
@@ -181,6 +184,7 @@ start_frontend() {
   if [[ ! -d "node_modules" ]]; then
     warn "node_modules not found — running npm install first..."
     npm install --silent
+    npm audit fix --silent 2>/dev/null || true
   fi
 
   # Kill stale process

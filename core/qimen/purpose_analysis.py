@@ -171,6 +171,7 @@ PURPOSE_LOGIC: Dict[str, Dict[str, Any]] = {
     },
     "感情": {
         "title": "感情婚姻", "icon": "❤️",
+        "yong_shen": {"type": "deity", "marker": "六合", "label": "六合·和合之神，主婚恋和谐"},
         "best_doors": ["休门", "开门"],
         "best_stars": ["天辅", "天英"],
         "best_stems": ["乙", "丙", "丁"],
@@ -201,6 +202,7 @@ PURPOSE_LOGIC: Dict[str, Dict[str, Any]] = {
     },
     "健康": {
         "title": "求医问药", "icon": "🏥",
+        "yong_shen": {"type": "star", "marker": "天心", "label": "天心星·医药之神，主良医得治"},
         "best_doors": ["休门", "开门"],
         "best_stars": ["天心", "天任"],
         "best_stems": ["丙", "乙"],
@@ -211,6 +213,7 @@ PURPOSE_LOGIC: Dict[str, Dict[str, Any]] = {
     },
     "学业": {
         "title": "学业考试", "icon": "📚",
+        "yong_shen": {"type": "star", "marker": "天辅", "label": "天辅星·文昌主文章智慧"},
         "best_doors": ["开门", "生门"],
         "best_stars": ["天辅", "天英"],
         "best_stems": ["丙", "丁", "乙"],
@@ -218,6 +221,89 @@ PURPOSE_LOGIC: Dict[str, Dict[str, Any]] = {
         "worst_stars": ["天柱", "天蓬"],
         "principle": "考学功名以天辅星为最佳，主文昌智慧；开门方向有利谋划；丙奇、丁奇主智慧大开。面向天辅星方位读书，或于吉时出发赴考。",
         "advanced": "应试宜天辅+开门+丙奇；见天柱、惊门，考场失利；见乙奇+天辅，必有贵人提携。",
+    },
+    "官司": {
+        "title": "官司诉讼", "icon": "⚖️",
+        "best_doors": ["开门", "生门", "休门"],
+        "best_stars": ["天心", "天辅"],
+        "best_stems": ["乙", "丙", "丁"],
+        "worst_doors": ["死门", "惊门", "伤门"],
+        "worst_stars": ["天蓬", "天柱", "天芮"],
+        "principle": "词讼以日干为我、时干为对方（或官府），比其衰旺定胜负。我方宜临开门、生门得地，得三奇贵人则有理有助；对方临惊门、伤门、庚格则其势已挫。值符所临利官长，六合主和解。",
+        "advanced": "我旺彼衰、我门吉彼门凶则胜；逢庚格（大格/刑格）主讼缠不休，得子孙类（天心、太阴）主和解了结。最忌己方入墓、空亡，主理屈词穷。",
+    },
+    "疾病": {
+        "title": "疾病占病", "icon": "🩺",
+        "yong_shen": {"type": "star", "marker": "天芮", "label": "天芮星·病符所临即病所", "polarity": "adverse"},
+        "best_doors": ["开门", "休门", "生门"],
+        "best_stars": ["天心", "天任"],
+        "best_stems": ["乙", "丙"],
+        "worst_doors": ["死门", "伤门"],
+        "worst_stars": ["天芮", "天蓬"],
+        "principle": "占病以日干为病人、天芮星为病符、天心星为良医、乙奇为良药。病人临生旺之门则可治，临死门、入墓、空亡则危。天芮加临之宫即病所，得天心、开门来制则愈。",
+        "advanced": "病符天芮受制（如天心金克之）主病退；天芮加日干、或日干入墓临白虎死门，病势沉重。久病逢空则脱，新病逢空则解。",
+    },
+    "失物": {
+        "title": "失物寻找", "icon": "🔍",
+        "yong_shen": {"type": "deity", "marker": "玄武", "label": "玄武·盗神所临即失物方位", "polarity": "adverse"},
+        "best_doors": ["生门", "开门", "杜门"],
+        "best_stars": ["天任", "天心"],
+        "best_stems": ["乙", "壬"],
+        "worst_doors": ["死门"],
+        "worst_stars": ["天蓬"],
+        "principle": "失物以日干（失主）、玄武（盗神）、所失之物类神定之。物在玄武所临之方；逢生门、杜门可寻得（杜门主藏匿可获），落空亡之宫则难复。马星临之主物已远去。",
+        "advanced": "玄武落宫即贼之方位与人物（看八神八门所主）；物未动则在杜门、休门近方，逢冲逢马则已被移走难追。",
+    },
+    "寻人": {
+        "title": "寻人走失", "icon": "🧍",
+        "best_doors": ["生门", "开门", "休门"],
+        "best_stars": ["天任", "天心"],
+        "best_stems": ["乙", "丙"],
+        "worst_doors": ["死门", "惊门"],
+        "worst_stars": ["天蓬", "天芮"],
+        "principle": "寻人以所寻之人之类神（六亲对应六仪/八神）或时干为用。其神临生门、休门近而易归；临马星、冲宫则远走他方；临死门、入墓、空亡则凶多吉少。",
+        "advanced": "类神临马星动而难归，临杜门则藏匿一处，临开生门主自归。逢空亡须待出空之日有音信。",
+    },
+    "谋事": {
+        "title": "谋事干求", "icon": "🤝",
+        "best_doors": ["开门", "生门"],
+        "best_stars": ["天辅", "天心", "天冲"],
+        "best_stems": ["乙", "丙", "丁"],
+        "worst_doors": ["死门", "杜门", "惊门"],
+        "worst_stars": ["天蓬", "天柱"],
+        "principle": "凡谋望干求，以日干为求测人、时干为所谋之事。两干相生相合、各临吉门吉星则事谐；得三奇得使、值符六合则有贵人成全。日干克时干则事由我得，时干克日干则事难成。",
+        "advanced": "三奇得使、玉女守门、青龙返首等吉格，谋无不成；逢门迫、击刑、入墓、空亡，谋事中阻或落空。",
+    },
+    "婚姻": {
+        "title": "婚姻嫁娶", "icon": "💍",
+        "yong_shen": {"type": "deity", "marker": "六合", "label": "六合·婚姻和合之神，临门姻缘可成"},
+        "best_doors": ["休门", "开门", "生门"],
+        "best_stars": ["天辅", "天心"],
+        "best_stems": ["乙", "丙", "丁"],
+        "worst_doors": ["死门", "伤门", "惊门"],
+        "worst_stars": ["天蓬", "天芮"],
+        "principle": "婚姻以男看时干、女看日干（或男乾女坤、男庚女乙），看两神生克合冲。两干相生相合、六合临门则姻缘可成；得乙奇、休门、天辅则和美。相冲相克、孤虚墓绝则难谐。",
+        "advanced": "六合+休门+乙奇为成婚大吉；男女类神入墓空亡，婚事多变；逢腾蛇主虚情、玄武主有暗昧第三者。",
+    },
+    "胜负": {
+        "title": "胜负竞赛", "icon": "🥇",
+        "best_doors": ["开门", "生门", "伤门"],
+        "best_stars": ["天冲", "天心", "天辅"],
+        "best_stems": ["乙", "丙"],
+        "worst_doors": ["死门", "惊门"],
+        "worst_stars": ["天蓬", "天芮"],
+        "principle": "竞赛博弈以日干为我、时干（或应方）为彼，比两者门星旺衰、生克先后。我旺彼衰、我克彼则胜；天盘克地盘利为客（先动者胜），地盘克天盘利为主（后应者胜）。伤门、天冲主攻击勇猛。",
+        "advanced": "得青龙返首、飞鸟跌穴利速战速胜；逢门迫、击刑、入墓于我方则败象，宜避其锋、以静制动。",
+    },
+    "买卖": {
+        "title": "买卖交易", "icon": "🛒",
+        "best_doors": ["生门", "开门"],
+        "best_stars": ["天任", "天心", "天辅"],
+        "best_stems": ["乙", "丙", "壬"],
+        "worst_doors": ["死门", "惊门"],
+        "worst_stars": ["天蓬", "天柱"],
+        "principle": "交易买卖以生门为财门、日干为我、时干为客（买方/卖方）。生门临旺、天盘生地盘（客来就我）则成交得利；两干相合则价谐。逢空亡则交易反复、逢马星则货物流转快。",
+        "advanced": "生门+天任+乙奇主稳获其利；逢庚（格）主阻滞悔约，逢空亡价虚不成，逢马宜速决不宜迟。",
     },
 }
 
@@ -231,7 +317,8 @@ def get_purpose_analysis(layout: Dict[str, Any], purpose: str) -> Dict[str, Any]
     # Score each palace for this purpose
     scored = []
     for p in palaces:
-        if p.get("position") == 5:  # 中宫 skip
+        # 中宫无方位（奇门正法：中5宫不参与方位择吉，只显示而不可用）
+        if p.get("position") == 5:
             continue
         score = 0
         reasons = []
@@ -374,5 +461,34 @@ def enrich_qimen_analysis(layout: Dict[str, Any]) -> Dict[str, Any]:
     layout["purpose_analyses"] = purpose_analyses
     layout["fuyin_fanyin"] = fuyin
     layout["purposes"] = list(PURPOSE_LOGIC.keys())
+
+    # 多层级九宫断（宫五行旺衰/奇仪生克/门迫·入墓·击刑·旬空·马星）
+    try:
+        from core.qimen.palace_layers import enrich_palace_layers
+        enrich_palace_layers(layout)
+    except Exception as _e1:
+        from core.log import log_failure; log_failure("qimen", "装配(自动补充日志)", _e1)
+
+    # 格局 × 九宫层级联动断
+    try:
+        from core.qimen.geju_layers import link_patterns_to_layers
+        link_patterns_to_layers(layout)
+    except Exception as _e2:
+        from core.log import log_failure; log_failure("qimen", "装配(自动补充日志)", _e2)
+
+    # 用神宫自动定位（值符/值使/日干/时干/年命）
+    try:
+        from core.qimen.yongshen import analyze_yongshen_palaces
+        layout["yongshen_palaces"] = analyze_yongshen_palaces(
+            layout, birth_year=layout.get("_birth_year"))
+    except Exception as _e3:
+        from core.log import log_failure; log_failure("qimen", "装配(自动补充日志)", _e3)
+
+    # 应期推算（就用神宫旺衰/空墓推事应之时）
+    try:
+        from core.qimen.yingqi import analyze_yingqi
+        analyze_yingqi(layout)
+    except Exception as _e4:
+        from core.log import log_failure; log_failure("qimen", "装配(自动补充日志)", _e4)
 
     return layout

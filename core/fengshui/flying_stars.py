@@ -11,7 +11,8 @@ Implements:
   • Personal lucky direction (文昌/催财/桃花/健康位)
 """
 from __future__ import annotations
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
+from core.constants import JIUGONG_POSITIONS
 
 # ─────────────────────────────────────────────────────────────
 # 1. Nine Star (九星) Properties
@@ -111,12 +112,21 @@ NINE_STARS: Dict[int, Dict[str, Any]] = {
 #    Regression: 2024=三碧(3), 2025=二黑(2), 2026=一白(1), 2027=九紫(9)
 # ─────────────────────────────────────────────────────────────
 
-# Reference: year 1984 = center star 9 (九紫)
-# Each year: center star = (9 - (year - 1984)) % 9, or 9 if 0
+# 标准年飞星算法（《沈氏玄空学》三元紫白）：
+#   下元甲子 1984 年中宫 = 七赤
+#   每年中宫数 -1，1↔9 循环
+#
+# 验证：2024=三碧，2025=二黑，2026=一白，2027=九紫
+# 民间俗称"逆推法"
 def get_annual_center_star(year: int) -> int:
-    """Return the center palace star number for the given year."""
-    star = (9 - (year - 1984) % 9) % 9
-    return star if star != 0 else 9
+    """
+    Return the center palace star for a year.
+    1984 (甲子) = 七赤，每年减一，循环 1-9。
+    """
+    offset = year - 1984
+    # (7 - offset) 取模到 [1..9]
+    center = ((7 - offset - 1) % 9) + 1
+    return center
 
 # Luoshu (洛书) natural positions for stars 1-9:
 # 4 9 2
@@ -196,60 +206,38 @@ def _build_annual_summary(year: int, center: int, wealth_dir: str, danger_dir: s
 
 # ─────────────────────────────────────────────────────────────
 # 3. Personal Lucky Directions (个人吉方)
-#    Based on Ming Gua and natal year
+#    基于命卦的 4 吉位 + 4 凶位
+#
+# 单一数据源：直接从 core.fengshui.calculator.EIGHT_MANSION 派生
+# 避免两个表数据漂移
 # ─────────────────────────────────────────────────────────────
 
+def _derive_ming_gua_lucky_from_eight_mansion() -> Dict[int, Dict[str, Any]]:
+    """从 EIGHT_MANSION 反查表派生命卦个人方位字典"""
+    from core.fengshui.calculator import EIGHT_MANSION
+    STAR_TO_KEY = {
+        "生气": "shengqi", "天医": "tianyi", "延年": "niannian", "伏位": "fuwei",
+        "绝命": "jueming", "五鬼": "wugui", "六煞": "liusha", "祸害": "huohai",
+    }
+    out = {}
+    for gua, sectors in EIGHT_MANSION.items():
+        gua_info = {}
+        for direction, star in sectors.items():
+            key = STAR_TO_KEY.get(star)
+            if key:
+                gua_info[key] = direction
+        # 衍生字段
+        gua_info["best_bed_dir"]  = f"{gua_info.get('shengqi','')}（生气）"
+        gua_info["best_desk_dir"] = f"{gua_info.get('tianyi','')}（天医）"
+        gua_info["wealth_spot"]   = f"{gua_info.get('shengqi','')}方"
+        gua_info["health_spot"]   = f"{gua_info.get('tianyi','')}方"
+        # 桃花位 = 延年位（《八宅明镜》：延年武曲星主婚姻）
+        gua_info["romance_spot"]  = f"{gua_info.get('niannian','')}方"
+        out[gua] = gua_info
+    return out
+
 # Ming Gua → 4 lucky directions (生气/天医/延年/伏位) and 4 unlucky
-MING_GUA_LUCKY: Dict[int, Dict[str, Any]] = {
-    1: {
-        "shengqi": "东南", "tianyi": "东", "niannian": "南", "fuwei": "北",
-        "jueming": "西", "wugui": "西北", "liusha": "东北", "huohai": "西南",
-        "best_bed_dir": "东南（生气）", "best_desk_dir": "东（天医）",
-        "wealth_spot": "东南角", "health_spot": "东方", "romance_spot": "南方",
-    },
-    2: {
-        "shengqi": "西北", "tianyi": "西南", "niannian": "东北", "fuwei": "西南",
-        "jueming": "东", "wugui": "东南", "liusha": "南", "huohai": "北",
-        "best_bed_dir": "西北（生气）", "best_desk_dir": "西南（天医）",
-        "wealth_spot": "西北角", "health_spot": "西南方", "romance_spot": "东北方",
-    },
-    3: {
-        "shengqi": "南", "tianyi": "北", "niannian": "东南", "fuwei": "东",
-        "jueming": "西南", "wugui": "东北", "liusha": "西北", "huohai": "西",
-        "best_bed_dir": "南（生气）", "best_desk_dir": "北（天医）",
-        "wealth_spot": "南方", "health_spot": "北方", "romance_spot": "东南方",
-    },
-    4: {
-        "shengqi": "北", "tianyi": "南", "niannian": "东", "fuwei": "东南",
-        "jueming": "西北", "wugui": "西", "liusha": "西南", "huohai": "东北",
-        "best_bed_dir": "北（生气）", "best_desk_dir": "南（天医）",
-        "wealth_spot": "北方", "health_spot": "南方", "romance_spot": "东方",
-    },
-    6: {
-        "shengqi": "西南", "tianyi": "东北", "niannian": "西", "fuwei": "西北",
-        "jueming": "南", "wugui": "北", "liusha": "东", "huohai": "东南",
-        "best_bed_dir": "西南（生气）", "best_desk_dir": "东北（天医）",
-        "wealth_spot": "西南角", "health_spot": "东北方", "romance_spot": "西方",
-    },
-    7: {
-        "shengqi": "东北", "tianyi": "西", "niannian": "西北", "fuwei": "西",
-        "jueming": "东", "wugui": "南", "liusha": "东南", "huohai": "北",
-        "best_bed_dir": "东北（生气）", "best_desk_dir": "西（天医）",
-        "wealth_spot": "东北角", "health_spot": "西方", "romance_spot": "西北方",
-    },
-    8: {
-        "shengqi": "西", "tianyi": "西北", "niannian": "西南", "fuwei": "东北",
-        "jueming": "东南", "wugui": "东", "liusha": "南", "huohai": "北",
-        "best_bed_dir": "西（生气）", "best_desk_dir": "西北（天医）",
-        "wealth_spot": "西方", "health_spot": "西北方", "romance_spot": "西南方",
-    },
-    9: {
-        "shengqi": "东", "tianyi": "东南", "niannian": "北", "fuwei": "南",
-        "jueming": "西南", "wugui": "西", "liusha": "西北", "huohai": "东北",
-        "best_bed_dir": "东（生气）", "best_desk_dir": "东南（天医）",
-        "wealth_spot": "东方", "health_spot": "东南方", "romance_spot": "北方",
-    },
-}
+MING_GUA_LUCKY: Dict[int, Dict[str, Any]] = _derive_ming_gua_lucky_from_eight_mansion()
 
 def get_personal_directions(ming_gua: int) -> Dict[str, Any]:
     """Return personal lucky and unlucky directions for a Ming Gua."""
@@ -336,3 +324,238 @@ def _build_combined_advice(
         advice.append(f"◆ 桃花情缘位在{romance}方，单身者可在此方摆放粉晶、鲜花以催旺感情。")
 
     return advice
+
+
+# ─────────────────────────────────────────────────────────────
+# 山星向星双星盘 (Xuan Kong Double-Star Chart)
+# ─────────────────────────────────────────────────────────────
+
+# 三元九运表: each 运 spans 20 years, identifies the 旺星 (prosperous star)
+YUAN_YUN_TABLE: Dict[int, Dict[str, Any]] = {
+    1: {"yuan": "上元", "years": (1864,1883), "wang_star": 1},
+    2: {"yuan": "上元", "years": (1884,1903), "wang_star": 2},
+    3: {"yuan": "上元", "years": (1904,1923), "wang_star": 3},
+    4: {"yuan": "中元", "years": (1924,1943), "wang_star": 4},
+    5: {"yuan": "中元", "years": (1944,1963), "wang_star": 5},
+    6: {"yuan": "中元", "years": (1964,1983), "wang_star": 6},
+    7: {"yuan": "下元", "years": (1984,2003), "wang_star": 7},
+    8: {"yuan": "下元", "years": (2004,2023), "wang_star": 8},
+    9: {"yuan": "下元", "years": (2024,2043), "wang_star": 9},
+}
+
+def get_current_yun(year: int = 2026) -> int:
+    """Return the current 运 (1-9) for a given year."""
+    for yun, data in YUAN_YUN_TABLE.items():
+        if data["years"][0] <= year <= data["years"][1]:
+            return yun
+    return 9  # default to 9th yun (2024-2043)
+
+
+# 二十四山方位 → 度数中心 (for flying star chart)
+# Each of 24 directions covers 15°; we map to a Luoshu palace
+ERSHI_SHAN_TO_PALACE: Dict[str, int] = {
+    # 坎宫 (北, 337.5°-22.5°): 壬子癸
+    "壬": 1, "子": 1, "癸": 1,
+    # 艮宫 (东北, 22.5°-67.5°): 丑艮寅
+    "丑": 8, "艮": 8, "寅": 8,
+    # 震宫 (东, 67.5°-112.5°): 甲卯乙
+    "甲": 3, "卯": 3, "乙": 3,
+    # 巽宫 (东南, 112.5°-157.5°): 辰巽巳
+    "辰": 4, "巽": 4, "巳": 4,
+    # 离宫 (南, 157.5°-202.5°): 丙午丁
+    "丙": 9, "午": 9, "丁": 9,
+    # 坤宫 (西南, 202.5°-247.5°): 未坤申
+    "未": 2, "坤": 2, "申": 2,
+    # 兑宫 (西, 247.5°-292.5°): 庚酉辛
+    "庚": 7, "酉": 7, "辛": 7,
+    # 乾宫 (西北, 292.5°-337.5°): 戌乾亥
+    "戌": 6, "乾": 6, "亥": 6,
+}
+
+# 向 → 对应坐 (opposite direction)
+XIANG_TO_ZUO: Dict[str, str] = {
+    "子": "午", "午": "子", "壬": "丙", "丙": "壬",
+    "癸": "丁", "丁": "癸", "丑": "未", "未": "丑",
+    "艮": "坤", "坤": "艮", "寅": "申", "申": "寅",
+    "甲": "庚", "庚": "甲", "卯": "酉", "酉": "卯",
+    "乙": "辛", "辛": "乙", "辰": "戌", "戌": "辰",
+    "巽": "乾", "乾": "巽", "巳": "亥", "亥": "巳",
+    "丙": "壬", "午": "子", "丁": "癸", "未": "丑",
+}
+
+
+def _fly_star(base_star: int, steps: int, forward: bool = True) -> int:
+    """Fly a star by 'steps' positions. Forward = 顺飞, backward = 逆飞."""
+    direction = 1 if forward else -1
+    return (base_star - 1 + direction * steps) % 9 + 1
+
+
+# 旺星入中宫 flying order (洛书顺序)
+LUOSHU_FORWARD  = [5, 1, 8, 3, 4, 9, 2, 7, 6]  # center→positions 顺飞
+LUOSHU_BACKWARD = [5, 9, 2, 7, 6, 1, 8, 3, 4]  # center→positions 逆飞
+
+
+def _fly_to_nine_palaces(center_star: int, forward: bool) -> Dict[int, int]:
+    """
+    Given the center palace star, fly it to all 9 palaces.
+    Returns {luoshu_pos: star_number}.
+    顺飞 (forward): center goes 5→1→8→3→4→9→2→7→6 decreasing by 1 each step
+    逆飞 (backward): center goes 5→9→2→7→6→1→8→3→4 increasing by 1 each step
+    """
+    POSITIONS = [5, 1, 8, 3, 4, 9, 2, 7, 6]  # Luoshu flying order
+    result: Dict[int, int] = {}
+    for i, pos in enumerate(POSITIONS):
+        if forward:
+            star = (center_star - 1 - i) % 9 + 1
+        else:
+            star = (center_star - 1 + i) % 9 + 1
+        result[pos] = star
+    return result
+
+
+def calculate_xuankong_chart(
+    xiang: str,
+    year: int = 2026,
+    yun: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Calculate the full Xuan Kong Flying Star double chart (玄空飞星双星盘).
+
+    Args:
+        xiang: 向首方位 (one of 24 mountains), e.g. '子', '午', '壬', '癸'
+        year:  Year for annual star overlay
+        yun:   运 (1-9). If None, derives from year.
+
+    Returns dict with:
+        zuo:         坐山
+        xiang:       向首
+        yun:         运数
+        wang_star:   当运旺星
+        mountain_chart: {pos: star} — 山星盘 (静/丁星)
+        facing_chart:   {pos: star} — 向星盘 (动/财星)
+        combined:       [{pos, palace_name, mountain_star, facing_star, annual_star, verdict}]
+        pattern:        旺山旺向/上山下水/双星到向/双星到坐 etc.
+        advice:         list of placement recommendations
+    """
+    if yun is None:
+        yun = get_current_yun(year)
+
+    wang_star = YUAN_YUN_TABLE[yun]["wang_star"]
+
+    # 坐山 = opposite of 向首
+    zuo = XIANG_TO_ZUO.get(xiang, "")
+
+    # 向首宫位 and 坐山宫位 (Luoshu palace number)
+    xiang_palace = ERSHI_SHAN_TO_PALACE.get(xiang, 9)
+    zuo_palace   = ERSHI_SHAN_TO_PALACE.get(zuo, 1)
+
+    # ── 运盘 (Period chart): 旺星入中 ────────────────────────
+    # 运星入中顺飞 always in Xuan Kong
+    yun_chart = _fly_to_nine_palaces(wang_star, forward=True)
+
+    # ── 向星盘 (Facing star / 财星) ───────────────────────────
+    # Facing star for 向首 palace = same as yun_chart[xiang_palace]
+    xiang_center_star = yun_chart[xiang_palace]
+    # Direction: odd stars (1,3,5,7,9) fly forward; even (2,4,6,8) fly backward
+    xiang_forward = (xiang_center_star % 2 == 1)
+    facing_chart  = _fly_to_nine_palaces(xiang_center_star, xiang_forward)
+
+    # ── 山星盘 (Mountain star / 丁星) ────────────────────────
+    zuo_center_star = yun_chart[zuo_palace]
+    zuo_forward     = (zuo_center_star % 2 == 1)
+    mountain_chart  = _fly_to_nine_palaces(zuo_center_star, zuo_forward)
+
+    # ── Annual flying star overlay ────────────────────────────
+    annual_center = get_annual_center_star(year)
+    annual_chart  = _fly_to_nine_palaces(annual_center, forward=True)
+
+    # ── 格局判断 ─────────────────────────────────────────────
+    # 旺星: whether wang_star is at 向首 (facing) or 坐山 (sitting)
+    mt_at_zuo    = mountain_chart.get(zuo_palace, 0) == wang_star
+    fa_at_xiang  = facing_chart.get(xiang_palace, 0) == wang_star
+    mt_at_xiang  = mountain_chart.get(xiang_palace, 0) == wang_star
+    fa_at_zuo    = facing_chart.get(zuo_palace, 0) == wang_star
+
+    if mt_at_zuo and fa_at_xiang:
+        pattern      = "旺山旺向"
+        pattern_desc = "山星旺气在坐山，向星旺气在向首，丁财两旺，最吉格局"
+        pattern_level = "大吉"
+    elif mt_at_xiang and fa_at_zuo:
+        pattern      = "上山下水"
+        pattern_desc = "山星旺气在向首，向星旺气在坐山，丁财两败，最凶格局"
+        pattern_level = "大凶"
+    elif mt_at_xiang and fa_at_xiang:
+        pattern      = "双星到向"
+        pattern_desc = "山星向星旺气皆在向首，利财不利丁，宜开门放水"
+        pattern_level = "中吉（利财）"
+    elif mt_at_zuo and fa_at_zuo:
+        pattern      = "双星到坐"
+        pattern_desc = "山星向星旺气皆在坐山，利丁不利财，宜背山面水"
+        pattern_level = "中吉（利丁）"
+    else:
+        pattern      = "一般格局"
+        pattern_desc = "旺星未到向首或坐山，需借助后天布局化解"
+        pattern_level = "平"
+
+    # ── Combined 9-palace display ─────────────────────────────
+    DIRECTION_MAP = {
+        5:"中", 1:"北", 9:"南", 3:"东", 7:"西",
+        8:"东北", 4:"东南", 2:"西南", 6:"西北",
+    }
+    combined = []
+    for pos in range(1, 10):
+        ms = mountain_chart.get(pos, 0)
+        fs = facing_chart.get(pos, 0)
+        an = annual_chart.get(pos, 0)
+        ms_nature = NINE_STARS.get(ms, {}).get("nature", "")
+        fs_nature = NINE_STARS.get(fs, {}).get("nature", "")
+
+        verdict = "平"
+        if ms == wang_star or fs == wang_star:
+            verdict = "旺"
+        if ms in (2, 5) and fs in (2, 5):
+            verdict = "煞"
+        elif ms in (2, 5) or fs in (2, 5):
+            verdict = "凶"
+        if an in (8, 9, 1) and verdict not in ("煞", "凶"):
+            verdict += "（流年吉）"
+
+        combined.append({
+            "position":       pos,
+            "direction":      DIRECTION_MAP.get(pos, ""),
+            "palace_name":    JIUGONG_POSITIONS.get(pos, ""),
+            "mountain_star":  ms,
+            "facing_star":    fs,
+            "annual_star":    an,
+            "ms_name":        NINE_STARS.get(ms, {}).get("name", ""),
+            "fs_name":        NINE_STARS.get(fs, {}).get("name", ""),
+            "verdict":        verdict,
+        })
+
+    # ── Placement advice ──────────────────────────────────────
+    advice = []
+    five_yellow_pos  = next((c["direction"] for c in combined if c["facing_star"]==5 or c["mountain_star"]==5), "")
+    two_black_pos    = next((c["direction"] for c in combined if c["annual_star"]==2), "")
+    eight_white_pos  = next((c["direction"] for c in combined if c["facing_star"]==8 or c["annual_star"]==8), "")
+
+    if five_yellow_pos:
+        advice.append(f"五黄在{five_yellow_pos}方，绝对不可动土开门，放六帝钱化煞")
+    if two_black_pos:
+        advice.append(f"流年二黑在{two_black_pos}方，放铜葫芦或六枚铜钱压制")
+    if eight_white_pos:
+        advice.append(f"八白旺星在{eight_white_pos}方，此处为财位，宜开门、放水或置财物")
+
+    return {
+        "zuo":             zuo,
+        "xiang":           xiang,
+        "yun":             yun,
+        "wang_star":       wang_star,
+        "pattern":         pattern,
+        "pattern_desc":    pattern_desc,
+        "pattern_level":   pattern_level,
+        "mountain_chart":  mountain_chart,
+        "facing_chart":    facing_chart,
+        "annual_chart":    annual_chart,
+        "combined":        combined,
+        "advice":          advice,
+    }

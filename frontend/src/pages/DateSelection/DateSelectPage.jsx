@@ -1,7 +1,15 @@
 import React, { useState } from 'react'
+import { clickable } from '../../utils/a11y'
+import '../../styles/plates.css'
 import AiInterpretPanel from '../../components/UI/AiInterpretPanel'
+import ShareImage from '../../components/UI/ShareImage'
 import { dateApi } from '../../api/client'
-import { useNotifyStore } from '../../store/settingsStore'
+import { useAsyncAction } from '../../hooks/useAsyncAction'
+import DateOverview from './DateOverview'
+import DateSynthesis from './DateSynthesis'
+import DatePerspectives from './DatePerspectives'
+import DateConsistencyAudit from './DateConsistencyAudit'
+import NarrationPanel from '../../components/NarrationPanel'
 
 const PURPOSES = ['婚嫁','开业','动土','搬家','出行','求医','祭祀','签约','安床','剃胎发']
 const PURPOSE_ICONS = { 婚嫁:'💍',开业:'🏪',动土:'🏗',搬家:'📦',出行:'✈',求医:'🏥',祭祀:'🕯',签约:'📝',安床:'🛏',剃胎发:'👶' }
@@ -41,25 +49,22 @@ function buildCalendar(year, month, result) {
 export default function DateSelectPage() {
   const now = new Date()
   const [form, setForm] = useState({
-    purpose:'婚嫁', year:now.getFullYear(), month:now.getMonth()+1,
+    purpose:'婚嫁', is_lunar:false, year:now.getFullYear(), month:now.getMonth()+1,
     birth_year:'', birth_month:'', birth_day:'',
   })
   const [result, setResult]     = useState(null)
-  const [loading, setLoading]   = useState(false)
+  const [showShare, setShowShare] = useState(false)
   const [selected, setSelected] = useState(null)
   const [viewMode, setViewMode] = useState('calendar')
-  const { notify } = useNotifyStore()
+  const { loading, error, run: runAsync } = useAsyncAction()
 
   const run = async () => {
-    setLoading(true); setSelected(null)
-    try {
-      const req = { ...form }
-      if (!req.birth_year) { delete req.birth_year; delete req.birth_month; delete req.birth_day }
-      else { req.birth_year=Number(req.birth_year); req.birth_month=Number(req.birth_month)||1; req.birth_day=Number(req.birth_day)||1 }
-      const data = await dateApi.select(req)
-      setResult(data); notify('择日完成', 'success')
-    } catch (e) { notify(e.message, 'error') }
-    finally { setLoading(false) }
+    setSelected(null)
+    const req = { ...form }
+    if (!req.birth_year) { delete req.birth_year; delete req.birth_month; delete req.birth_day }
+    else { req.birth_year=Number(req.birth_year); req.birth_month=Number(req.birth_month)||1; req.birth_day=Number(req.birth_day)||1 }
+    const data = await runAsync(() => dateApi.select(req), { successMsg: '择日完成' })
+    if (data) setResult(data)
   }
 
   const set = (k, v) => setForm(f => ({...f,[k]:v}))
@@ -117,18 +122,19 @@ export default function DateSelectPage() {
             <div className="card">
               <div className="card-title">个人生辰（可选）</div>
               <p style={{ fontSize:'var(--text-xs)', color:'var(--text-muted)', marginBottom:'0.5rem', fontFamily:'var(--font-serif)' }}>
-                填入后可排除与本命相冲之日
+                填入后按本命八字用神/冲克过滤，择「日扶其用、不犯其冲」之吉日
               </p>
               <div className="form-row-3">
-                <div className="form-group"><label>年</label><input type="number" placeholder="如1990" value={form.birth_year} onChange={e=>set('birth_year',e.target.value)} /></div>
-                <div className="form-group"><label>月</label><input type="number" min="1" max="12" placeholder="1-12" value={form.birth_month} onChange={e=>set('birth_month',e.target.value)} /></div>
-                <div className="form-group"><label>日</label><input type="number" min="1" max="31" placeholder="1-31" value={form.birth_day} onChange={e=>set('birth_day',e.target.value)} /></div>
+                <div className="form-group"><label>出生年（农历）</label><input type="number" placeholder="如1990" value={form.birth_year} onChange={e=>set('birth_year',e.target.value)} /></div>
+                <div className="form-group"><label>出生月（农历）</label><input type="number" min="1" max="12" placeholder="1-12" value={form.birth_month} onChange={e=>set('birth_month',e.target.value)} /></div>
+                <div className="form-group"><label>出生日（农历）</label><input type="number" min="1" max="31" placeholder="1-31" value={form.birth_day} onChange={e=>set('birth_day',e.target.value)} /></div>
               </div>
             </div>
 
             <button className="btn btn-primary btn-full btn-lg" onClick={run} disabled={loading}>
               {loading ? '推算中…' : '推算吉日 ▶'}
             </button>
+            {error && <div className="error-box">⚠ {error}</div>}
 
             {/* Theory sidebar */}
             <div className="card">
@@ -145,32 +151,6 @@ export default function DateSelectPage() {
               ))}
             </div>
 
-            {/* Summary stats */}
-            {result && (
-              <div className="card card-glow">
-                <div className="card-title">本月择日概览</div>
-                <div style={{ display:'flex', gap:'0.75rem', justifyContent:'space-around' }}>
-                  {[
-                    ['吉日', (result.auspicious_days||[]).length, 'var(--jade)'],
-                    ['最佳', (result.best_days||[]).length, 'var(--accent)'],
-                    ['凶日', (result.inauspicious_days||[]).length, 'var(--red-light)'],
-                  ].map(([l,n,c]) => (
-                    <div key={l} style={{ textAlign:'center' }}>
-                      <div style={{ fontFamily:'var(--font-display)', fontSize:'2rem', color:c, lineHeight:1 }}>{n}</div>
-                      <div style={{ fontSize:'var(--text-xs)', color:'var(--text-muted)' }}>{l}</div>
-                    </div>
-                  ))}
-                </div>
-                {result.three_killings && (
-                  <div style={{ marginTop:'0.65rem', padding:'0.45rem 0.7rem',
-                    background:'rgba(181,54,30,0.07)', border:'1px solid var(--accent-dim)',
-                    borderRadius:'var(--r-sm)', fontSize:'var(--text-xs)', color:'var(--accent)',
-                    fontFamily:'var(--font-serif)' }}>
-                    ⚠ 三煞方位：{result.three_killings} — 本月动土忌此方向
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* ── Right ── */}
@@ -188,9 +168,87 @@ export default function DateSelectPage() {
 
             {!loading && result && (
               <>
+                {/* 综合总论 · 总汇合参（全功能激活后的最终汇总，作为右栏主体内容的开篇总纲）*/}
+                {result?.master_synthesis?.available && (() => {
+                  const QC = { 吉:'#27ae60', 中:'var(--accent)', 凶:'#c0392b' }
+                  const ms = result.master_synthesis
+                  const pc = QC[ms.overall_quality] || 'var(--accent)'
+                  return (
+                    <div className="card card-glow" style={{ borderTop:`4px solid ${pc}`, marginBottom:'1rem' }}>
+                      <div className="card-title">综合总论 · 总汇合参</div>
+                      <div style={{ fontFamily:'var(--font-serif)', fontSize:'var(--text-md)', fontWeight:600,
+                        color:pc, marginBottom:'0.5rem' }}>
+                        为「{ms.purpose}」择期 · 综评<span style={{ color:pc }}>{ms.overall_quality}</span>
+                      </div>
+                      <div style={{ fontFamily:'var(--font-serif)', fontSize:'var(--text-base)', lineHeight:1.7,
+                        color:'var(--text-secondary)', padding:'0.5rem 0.7rem', background:`${pc}10`,
+                        borderLeft:`4px solid ${pc}`, marginBottom:'0.7rem' }}>
+                        {ms.headline}
+                      </div>
+                      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:'6px', marginBottom:'0.7rem' }}>
+                        {(ms.dimension_verdicts || []).map((dv, i) => {
+                          const c = QC[dv.quality] || '#888'
+                          return (
+                            <div key={i} style={{ padding:'0.4rem 0.6rem', background:'var(--bg-subtle)',
+                              borderRadius:'var(--r-sm)', borderLeft:`3px solid ${c}` }}>
+                              <span style={{ fontWeight:700, fontSize:'var(--text-sm)' }}>{dv.dim}</span>
+                              <span style={{ color:c, fontSize:'var(--text-xs)', marginLeft:6 }}>{dv.quality}</span>
+                              <div style={{ fontSize:'var(--text-xs)', color:'var(--text-faint)', marginTop:2,
+                                fontFamily:'var(--font-serif)', lineHeight:1.5 }}>{dv.verdict}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {(ms.integrated_paragraphs || []).map((p, i) => (
+                        <p key={i} style={{ fontFamily:'var(--font-serif)', fontSize:'var(--text-sm)',
+                          lineHeight:1.8, color:'var(--text-secondary)', margin:'0.3rem 0' }}>{p}</p>
+                      ))}
+                      {ms.master_advice && (
+                        <div style={{ marginTop:'0.5rem', padding:'0.5rem 0.7rem', background:'var(--bg-subtle)',
+                          borderRadius:'var(--r-sm)', fontSize:'var(--text-sm)', fontFamily:'var(--font-serif)',
+                          color:'var(--text-secondary)' }}>
+                          <b style={{ color:pc }}>总建议 · </b>{ms.master_advice}
+                        </div>
+                      )}
+                      <NarrationPanel ms={ms} fullData={result} module="date" />
+                    </div>
+                  )
+                })()}
+
+                {/* 本月择日概览统计 */}
+                <div className="card card-glow" style={{ marginBottom:'1rem' }}>
+                  <div className="card-title">本月择日概览</div>
+                  <div style={{ display:'flex', gap:'0.75rem', justifyContent:'space-around' }}>
+                    {[
+                      ['吉日', (result.auspicious_days||[]).length, 'var(--jade)'],
+                      ['最佳', (result.best_days||[]).length, 'var(--accent)'],
+                      ['凶日', (result.inauspicious_days||[]).length, 'var(--red-light)'],
+                    ].map(([l,n,c]) => (
+                      <div key={l} style={{ textAlign:'center' }}>
+                        <div style={{ fontFamily:'var(--font-display)', fontSize:'2rem', color:c, lineHeight:1 }}>{n}</div>
+                        <div style={{ fontSize:'var(--text-xs)', color:'var(--text-muted)' }}>{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {result.three_killings && (
+                    <div style={{ marginTop:'0.65rem', padding:'0.45rem 0.7rem',
+                      background:'rgba(207,59,44,0.07)', border:'1px solid var(--accent-dim)',
+                      borderRadius:'var(--r-sm)', fontSize:'var(--text-xs)', color:'var(--accent)',
+                      fontFamily:'var(--font-serif)' }}>
+                      ⚠ 三煞方位：{result.three_killings} — 本月动土忌此方向
+                    </div>
+                  )}
+                </div>
+
+                <DateOverview data={result} />
+                <DateSynthesis data={result} />
+                <DatePerspectives data={result} />
+                <DateConsistencyAudit data={result} />
+
                 <div style={{ display:'flex', gap:'0.5rem', marginBottom:'1rem', alignItems:'center' }}>
                   <button className={`btn btn-sm ${viewMode==='calendar'?'btn-primary':''}`} onClick={() => setViewMode('calendar')}>📅 日历</button>
                   <button className={`btn btn-sm ${viewMode==='list'?'btn-primary':''}`} onClick={() => setViewMode('list')}>📋 列表</button>
+                  <button className="btn btn-sm" onClick={() => setShowShare(true)} title="生成分享图">🖼 分享图</button>
                   <span style={{ fontSize:'var(--text-xs)', color:'var(--text-faint)', marginLeft:'auto', fontFamily:'var(--font-serif)' }}>
                     {form.year}年{form.month}月 · {form.purpose}
                   </span>
@@ -210,11 +268,11 @@ export default function DateSelectPage() {
                       {calDays.map((cell, i) => {
                         if (!cell) return <div key={i}/>
                         const jcOfficer = cell.info?.officer
-                        const bgColor = cell.best ? 'var(--accent)' : cell.auspicious ? 'rgba(26,122,82,0.09)' : cell.inauspicious ? 'rgba(181,54,30,0.07)' : 'transparent'
-                        const borderColor = cell.best ? 'var(--accent)' : cell.auspicious ? 'rgba(26,122,82,0.35)' : cell.inauspicious ? 'rgba(181,54,30,0.25)' : 'var(--border)'
-                        const textColor = cell.best ? '#fff' : cell.auspicious ? 'var(--jade)' : cell.inauspicious ? 'var(--accent)' : 'var(--text-primary)'
+                        const bgColor = cell.best ? 'var(--accent)' : cell.auspicious ? 'rgba(74,122,90,0.09)' : cell.inauspicious ? 'rgba(168,88,64,0.07)' : 'transparent'
+                        const borderColor = cell.best ? 'var(--accent)' : cell.auspicious ? 'rgba(74,122,90,0.35)' : cell.inauspicious ? 'rgba(168,88,64,0.25)' : 'var(--border)'
+                        const textColor = cell.best ? '#fff' : cell.auspicious ? 'var(--jade)' : cell.inauspicious ? 'var(--red)' : 'var(--text-primary)'
                         return (
-                          <div key={i} onClick={() => setSelected(cell.info || cell)}
+                          <div key={i} {...clickable(() => setSelected(cell.info || cell))}
                             style={{
                               aspectRatio:'0.85', borderRadius:'var(--r-sm)',
                               border:`1.5px solid ${borderColor}`, background:bgColor,
@@ -235,7 +293,7 @@ export default function DateSelectPage() {
                     <div style={{ display:'flex', gap:'1rem', marginTop:'0.75rem', fontSize:'var(--text-xs)', color:'var(--text-faint)', flexWrap:'wrap' }}>
                       <span><span style={{ color:'var(--accent)', fontWeight:700 }}>■</span> 最佳吉日</span>
                       <span><span style={{ color:'var(--jade)', fontWeight:700 }}>■</span> 普通吉日</span>
-                      <span><span style={{ color:'var(--accent)', opacity:0.5, fontWeight:700 }}>■</span> 凶日</span>
+                      <span><span style={{ color:'var(--red)', fontWeight:700 }}>■</span> 凶日</span>
                     </div>
                   </div>
                 )}
@@ -243,37 +301,72 @@ export default function DateSelectPage() {
                 {/* Selected day detail */}
                 {selected && (
                   <div className="card card-glow" style={{ marginTop:'0.85rem' }}>
-                    <div className="card-title">
-                      {form.year}年{form.month}月{selected.day || ''}日 详解
-                    </div>
-                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.4rem', marginBottom:'0.75rem' }}>
-                      {selected.officer && (
-                        <span className="badge" style={{
-                          background: JIANCHU_NATURE[selected.officer]==='大吉'?'rgba(26,122,82,0.12)':JIANCHU_NATURE[selected.officer]==='大凶'?'rgba(181,54,30,0.12)':'var(--bg-subtle)',
-                          color: JIANCHU_NATURE[selected.officer]==='大吉'?'var(--jade)':JIANCHU_NATURE[selected.officer]==='大凶'?'var(--accent)':'var(--text-muted)',
-                          border:'1px solid currentColor',
-                        }}>{selected.officer}日 · {JIANCHU_NATURE[selected.officer]}</span>
-                      )}
-                      {selected.star && <span className="badge badge-cyan">{selected.star}宿</span>}
-                      {selected.score !== undefined && (
-                        <span className={`badge ${selected.score>0?'badge-jade':selected.score<0?'badge-red':'badge-muted'}`}>
-                          综合评分 {selected.score>0?'+':''}{selected.score}
-                        </span>
-                      )}
-                    </div>
-                    {selected.reasons?.length > 0 && (
-                      <div style={{ display:'flex', flexDirection:'column', gap:'0.3rem' }}>
-                        {selected.reasons.map((r,i) => (
-                          <div key={i} style={{ display:'flex', gap:'0.5rem', fontSize:'var(--text-sm)',
-                            color:'var(--text-secondary)', fontFamily:'var(--font-serif)', lineHeight:1.75 }}>
-                            <span style={{ color: r.includes('忌')||r.includes('凶')?'var(--accent)':'var(--jade)', flexShrink:0 }}>
-                              {r.includes('忌')||r.includes('凶')?'✗':'✓'}
-                            </span>
-                            <span>{r}</span>
-                          </div>
-                        ))}
+                    <div className="gv-plate">
+                      <div className="gv-almanac-head">
+                        <span className="gv-seal" style={{ background:'#d8ab3c', color:'#473205' }}>历</span>
+                        <span className="dt">{form.year}年{form.month}月{selected.day || ''}日</span>
                       </div>
-                    )}
+
+                      <div className="gv-almanac-tags">
+                        {selected.officer && (
+                          <span className="gv-almanac-tag" style={{
+                            color: JIANCHU_NATURE[selected.officer]==='大吉'?'var(--gv-mu)':JIANCHU_NATURE[selected.officer]==='大凶'?'var(--gv-vermilion)':'var(--gv-ink-3)',
+                          }}>{selected.officer}日 · {JIANCHU_NATURE[selected.officer]}</span>
+                        )}
+                        {selected.star && <span className="gv-almanac-tag" style={{ color:'var(--gv-shui)' }}>{selected.star}宿</span>}
+                        {selected.score !== undefined && (
+                          <span className="gv-almanac-tag" style={{ color: selected.score>0?'var(--gv-mu)':selected.score<0?'var(--gv-vermilion)':'var(--gv-ink-3)' }}>
+                            综合评分 {selected.score>0?'+':''}{selected.score}
+                          </span>
+                        )}
+                      </div>
+
+                      {selected.reasons?.length > 0 && (
+                        <div className="gv-almanac-list">
+                          {selected.reasons.map((r,i) => (
+                            <div key={i} className="gv-almanac-item">
+                              <span className={`mk ${r.includes('忌')||r.includes('凶')?'ji':'yi'}`}>
+                                {r.includes('忌')||r.includes('凶')?'✗':'✓'}
+                              </span>
+                              <span>{r}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {selected.shensha_purpose && (
+                        <div className="gv-almanac-note">
+                          <div className="lbl" style={{ color:'var(--gv-ink-3)' }}>
+                            神煞 · 择「{selected.shensha_purpose.purpose}」专断 [{selected.shensha_purpose.level}]
+                          </div>
+                          <div className="row">{selected.shensha_purpose.verdict}</div>
+                        </div>
+                      )}
+
+                      {selected.shensha_annotated?.ji_shen_explained?.length > 0 && (
+                        <div className="gv-almanac-note">
+                          <div className="lbl good">吉神释义</div>
+                          {selected.shensha_annotated.ji_shen_explained.filter(e=>e.meaning).slice(0,6).map((e,i)=>(
+                            <div key={i} className="row">
+                              <span className="nm good">{e.name}</span>
+                              <span className="lv">（{e.level}）</span>　{e.meaning}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {selected.shensha_annotated?.xiong_sha_explained?.length > 0 && (
+                        <div className="gv-almanac-note">
+                          <div className="lbl bad">凶煞释义</div>
+                          {selected.shensha_annotated.xiong_sha_explained.filter(e=>e.meaning).slice(0,6).map((e,i)=>(
+                            <div key={i} className="row">
+                              <span className="nm bad">{e.name}</span>
+                              <span className="lv">（{e.level}）</span>　{e.meaning}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -282,7 +375,7 @@ export default function DateSelectPage() {
                     {[...(result.best_days||[]),...(result.auspicious_days||[])].slice(0,12).map((d,i) => (
                       <div key={i} className="card" style={{ padding:'0.75rem 1rem', cursor:'pointer',
                         borderColor: i < (result.best_days||[]).length ? 'var(--accent-dim)' : 'var(--border)' }}
-                        onClick={() => setSelected(d)}>
+                        {...clickable(() => setSelected(d), { label:`${form.year}年${form.month}月${d.day}日` })}>
                         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                           <span style={{ fontFamily:'var(--font-display)', fontSize:'var(--text-md)',
                             color: i<(result.best_days||[]).length?'var(--accent)':'var(--text-primary)' }}>
@@ -310,6 +403,7 @@ export default function DateSelectPage() {
           </div>
         </div>
       </div>
+      {showShare && <ShareImage data={result ? { ...result, year: form.year, month: form.month, purpose: form.purpose } : null} module="date" onClose={() => setShowShare(false)} />}
     </div>
   )
 }

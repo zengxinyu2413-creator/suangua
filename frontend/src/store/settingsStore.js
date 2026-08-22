@@ -9,8 +9,13 @@ import { persist } from 'zustand/middleware';
 export const useSettingsStore = create(
   persist(
     (set, get) => ({
-      // API
-      apiBaseUrl: 'http://localhost:8888',
+      // API — empty string = same-origin relative requests ("/api/v1/...").
+      // Works automatically in three scenarios without any manual config:
+      //   1. Local dev:      vite proxy forwards /api & /health to the backend
+      //   2. Single-port prod: FastAPI serves the built frontend + API together
+      //   3. Reverse-proxied cloud: frontend and API share the public domain
+      // Only override this (in 设置) if the API truly lives on a different origin.
+      apiBaseUrl: '',
 
       // LLM configuration
       llmProvider: 'anthropic',   // 'anthropic' | 'deepseek' | 'openai' | 'moonshot' | 'gemini'
@@ -21,7 +26,7 @@ export const useSettingsStore = create(
       llmCustomName: '',                // display name for custom provider
 
       // Theme
-      theme: 'dark',
+      theme: 'light',
       accentColor: 'red',
 
       // Locale / defaults
@@ -45,9 +50,9 @@ export const useSettingsStore = create(
       setCompactMode:   (v)   => set({ compactMode: v }),
       setAnimationsEnabled: (v) => set({ animationsEnabled: v }),
       resetAll: () => set({
-        apiBaseUrl: 'http://localhost:8888',
+        apiBaseUrl: '',
         llmProvider: 'anthropic', llmKey: '', llmBaseUrl: '', llmModel: 'claude-sonnet-4-6', llmStyle: 'anthropic', llmCustomName: '',
-        theme: 'dark', accentColor: 'red',
+        theme: 'light', accentColor: 'red',
         defaultGender: 'male', compactMode: false, animationsEnabled: true,
       }),
     }),

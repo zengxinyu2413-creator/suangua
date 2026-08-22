@@ -126,21 +126,28 @@ def _detect_patterns(layout: Dict, palaces: List[Dict], ck: Dict) -> List[Dict]:
     gejv_db = ck.get("gejv", {})
     patterns = []
 
-    # Fuyin / Fanyin from layout flags
-    if layout.get("fuyin"):
+    # Fuyin / Fanyin —— 由 detect_fuyin_fanyin 按局数/遁判定（旧版读 layout.get("fuyin")
+    # 键错配恒 None、伏吟反吟大凶格从不进格局列表；现直接以局数判，纳入 patterns）。
+    try:
+        from core.qimen.purpose_analysis import detect_fuyin_fanyin
+        _ff = detect_fuyin_fanyin(layout.get("ju_number", 1),
+                                  layout.get("ju_type", "阳遁") == "阳遁")
+    except Exception:
+        _ff = {}
+    if _ff.get("type") == "伏吟":
         g = gejv_db.get("伏吟", {})
         patterns.append({
             "name": "伏吟",
             "level": "大凶",
-            "desc": g.get("应事", "万事停滞，原地踏步，宜静守待时"),
+            "desc": g.get("应事", _ff.get("desc") or "万事停滞，原地踏步，宜静守待时"),
             "kou": g.get("口诀", "伏吟之局最难行，万事停滞莫强动"),
         })
-    if layout.get("fanyin"):
+    if _ff.get("type") == "反吟":
         g = gejv_db.get("反吟", {})
         patterns.append({
             "name": "反吟",
             "level": "大凶",
-            "desc": g.get("应事", "反覆动荡，进退两难，事与愿违"),
+            "desc": g.get("应事", _ff.get("desc") or "反覆动荡，进退两难，事与愿违"),
             "kou": g.get("口诀", "反吟之局事颠倒，进退两难莫轻动"),
         })
 
@@ -177,7 +184,7 @@ def _detect_patterns(layout: Dict, palaces: List[Dict], ck: Dict) -> List[Dict]:
                 "kou": "三奇得使诸事吉，贵人相助无阻隔",
             })
 
-    return patterns[:6]  # Return top 6 most significant
+    return patterns  # Return ALL detected patterns (no truncation, frontend handles display)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -269,51 +276,282 @@ def _build_verdict(zhifu: Dict, zhishi: Dict, rel: str, level: str,
 # ─────────────────────────────────────────────────────────────
 # Purpose-based yong shen analysis (用神取法)
 # ─────────────────────────────────────────────────────────────
-def _analyze_yong_shen(palaces: List[Dict], question: str, ck: Dict) -> Dict[str, Any]:
-    """Determine 用神 and its palace for the given purpose."""
-    yong_db = ck.get("yongshen", {})
+def _analyze_yong_shen(palaces: List[Dict], question: str, ck: Dict,
+                       purpose: str = "", day_gan: str = "", hour_gan: str = "") -> Dict[str, Any]:
+    """据用事（purpose 优先，question 关键词回退）取用神及其落宫。
+
+    用神取法以《奇门法穷》《烟波钓叟赋》用事门为据：求财生门、事业开门、
+    婚姻休门（六合）、疾病天芮、失物玄武……由 PURPOSE_LOGIC 统一管理；
+    官司另法：日干为我、时干为彼，比二宫强弱定胜负（见 _analyze_guansi）。
+    """
+    from core.qimen.purpose_analysis import PURPOSE_LOGIC
+
     question = question or ""
+    purpose = (purpose or "").strip()
 
-    # Topic detection
-    _TOPIC_MAP = [
-        (["求财", "财运", "投资", "经商", "生意", "赚钱"],  "求财"),
-        (["感情", "婚姻", "恋爱", "婚嫁", "桃花"],        "婚嫁感情"),
-        (["事业", "升职", "求官", "职位", "工作"],        "求官仕途"),
-        (["出行", "旅游", "出国", "远行", "行程"],        "出行远足"),
-        (["健康", "疾病", "看病", "求医", "手术"],        "疾病求医"),
-        (["考试", "学习", "求学", "考研"],               "求学考试"),
-        (["谈判", "合作", "签约", "协议"],               "经商谈判"),
-        (["官司", "诉讼", "打官司"],                     "官司诉讼"),
+    # ① 由 question 关键词推定用事类别（映射到 PURPOSE_LOGIC 之中文键）
+    _Q2P = [
+        (["求财", "财运", "投资", "经商", "生意", "赚钱", "买卖"], "求财"),
+        (["感情", "恋爱", "桃花", "对象"],                       "感情"),
+        (["婚姻", "婚嫁", "结婚", "嫁娶"],                       "婚姻"),
+        (["事业", "升职", "求官", "职位", "工作", "仕途", "升迁"], "事业"),
+        (["出行", "旅游", "出国", "远行", "行程", "搬家"],        "出行"),
+        (["疾病", "看病", "求医", "手术", "病情", "可治", "治病", "得病", "生病"], "疾病"),
+        (["健康", "养生", "身体"],                              "健康"),
+        (["考试", "学习", "求学", "考研", "学业"],               "学业"),
+        (["官司", "诉讼", "打官司", "纠纷"],                     "官司"),
+        (["失物", "丢失", "寻物"],                              "失物"),
+        (["寻人", "找人"],                                     "寻人"),
+        (["胜负", "比赛", "竞争", "输赢"],                       "胜负"),
+        (["谋事", "计划", "能否成"],                            "谋事"),
     ]
-    topic = "求财"  # default
-    for keywords, t in _TOPIC_MAP:
-        if any(k in question for k in keywords):
-            topic = t
-            break
+    topic = ""
+    if purpose in PURPOSE_LOGIC:
+        topic = purpose          # 明确指定用事，优先
+    # purpose 为非规范键（如"诉讼/求职求官/考试/求医"）时，亦以关键词归并到规范用事，
+    # 杜绝静默回退求财致用神错配（曾："求职求官"→生门"求财谋利用神"）。
+    if not topic and purpose:
+        for keywords, t in _Q2P:
+            if any(k in purpose for k in keywords):
+                topic = t
+                break
+    if not topic:
+        for keywords, t in _Q2P:
+            if any(k in question for k in keywords):
+                topic = t
+                break
+    if not topic:
+        topic = "谋事"           # 无可归并者一律按通用「谋事干求」，不再误默认求财
 
-    yong_info = yong_db.get(topic, {})
-    yong_shen_name = yong_info.get("用神", "生门（默认求财用神）")
+    logic = PURPOSE_LOGIC.get(topic, PURPOSE_LOGIC.get("谋事", {}))
 
-    # Find yong shen palace
+    # 官司/胜负另法：日干为我、时干为彼，比二宫强弱定胜负（《奇门法穷·词讼/竞斗章》）
+    if topic in ("官司", "胜负") and day_gan and hour_gan:
+        return _analyze_guansi(palaces, day_gan, hour_gan, logic, topic=topic)
+
+    # 寻人另法：以时干为所寻之人，观其落宫门星断远近归否（《奇门法穷·寻人章》）
+    if topic == "寻人" and hour_gan:
+        return _analyze_xunren(palaces, hour_gan, logic)
+
+    best_doors = logic.get("best_doors", ["生门"]) or ["生门"]
+    best_stars = logic.get("best_stars", []) or []
+    worst_doors = logic.get("worst_doors", []) or []
+    worst_stars = logic.get("worst_stars", []) or []
+    primary_door = best_doors[0]
+
+    # ② 定位用神所在之宫
+    #   古法用神类神有别：求财/事业/婚姻/出行以「门」为用，
+    #   学业以天辅（文昌）、疾病以天芮（病符）、失物以玄武（盗神）——以「星/神」为用。
+    #   故 PURPOSE_LOGIC 可显式标 yong_shen{type,marker,label}；缺省回退门。
+    ys_spec = logic.get("yong_shen")
     yong_palace = None
-    if "生门" in yong_shen_name:
-        yong_palace = next((p for p in palaces if "生门" in p.get("door", "")), None)
-    elif "开门" in yong_shen_name:
-        yong_palace = next((p for p in palaces if "开门" in p.get("door", "")), None)
-    elif "天心" in yong_shen_name:
-        yong_palace = next((p for p in palaces if "天心" in p.get("star", "")), None)
+    used_marker = primary_door
+    explicit_name = ""
+    if ys_spec:
+        _field = {"star": "star", "door": "door", "deity": "deity", "stem": "di_pan"}.get(
+            ys_spec.get("type", "door"), "door")
+        _marker = ys_spec.get("marker", "")
+        yong_palace = next((p for p in palaces if _marker and _marker in str(p.get(_field, ""))), None)
+        if yong_palace:
+            used_marker = _marker
+            explicit_name = f"{_marker}（{ys_spec.get('label', logic.get('title','') + '用神')}）"
+    # 门类用神（或星/神用神不上盘时）走门定位
+    if yong_palace is None:
+        yong_palace = next((p for p in palaces if primary_door in p.get("door", "")), None)
+        used_marker = primary_door
+        # 主用神门不上盘则取次门
+        if yong_palace is None and len(best_doors) > 1:
+            for d in best_doors[1:]:
+                yong_palace = next((p for p in palaces if d in p.get("door", "")), None)
+                if yong_palace:
+                    used_marker = d
+                    break
 
-    yong_quality = "平"
+    # ③ 据落宫星门神与吉凶门星，评用神品质
+    quality = "平"
+    _polarity = (ys_spec.get("polarity", "auspicious") if ys_spec and yong_palace and explicit_name
+                else "auspicious")
     if yong_palace:
-        yong_quality = yong_palace.get("quality", "平")
+        q0 = yong_palace.get("quality", "平")
+        star = yong_palace.get("star", "")
+        door = yong_palace.get("door", "")
+        if _polarity == "adverse":
+            # 逆向用神（病符天芮 / 盗神玄武）：以五行论病符/盗神是否受制——
+            #   宫克用神(木克土)、用神生宫泄气(土生金) → 受制/泄 → 吉（病退/物可寻）；
+            #   宫生用神(火生土)、比和(土土) → 得生/得地 → 凶（病重/难寻）；
+            #   用神克宫(土克水) → 耗力 → 平。
+            _KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+            _POS_WX = {1: "水", 2: "土", 3: "木", 4: "木", 5: "土", 6: "金", 7: "金", 8: "土", 9: "火"}
+            _yong_wx = _XING_WX.get(used_marker) or _SHEN_WX.get(used_marker) or ""
+            _gong_wx = _POS_WX.get(yong_palace.get("position"), "")
+            if not _yong_wx or not _gong_wx:
+                quality = "平"
+            elif _KE.get(_gong_wx) == _yong_wx or _WX_SHENG.get(_yong_wx) == _gong_wx:
+                quality = "吉"      # 受制 / 泄气 → 病退、物可寻
+            elif _WX_SHENG.get(_gong_wx) == _yong_wx or _gong_wx == _yong_wx:
+                quality = "凶"      # 得生 / 得地 → 病重、难寻
+            else:
+                quality = "平"      # 用神克宫，耗力
+        else:
+            # 顺向用神：落宫本身吉凶 + 是否逢忌门忌星 微调
+            bad_hit = (any(w in door for w in worst_doors) or any(w in star for w in worst_stars))
+            good_hit = (any(g in star for g in best_stars))
+            if bad_hit:
+                quality = "凶" if "吉" in q0 else ("大凶" if "凶" in q0 else "平")
+            elif good_hit and "吉" in q0:
+                quality = "大吉"
+            else:
+                quality = q0
+
+    if explicit_name:
+        name = explicit_name
+    else:
+        name = f"{primary_door}（{logic.get('title','')}用神）"
+        if used_marker != primary_door:
+            name = f"{used_marker}（{primary_door}不上盘，取次用）"
 
     return {
         "topic":   topic,
-        "name":    yong_shen_name,
-        "palace":  yong_palace.get("palace_name", "未知") if yong_palace else "未定",
-        "quality": yong_quality,
-        "rules":   yong_info.get("断法", ""),
-        "best":    yong_info.get("最吉", ""),
+        "name":    name,
+        "palace":  yong_palace.get("palace_name", "未上盘") if yong_palace else "未上盘",
+        "quality": quality,
+        "rules":   logic.get("principle", ""),
+        "best":    logic.get("advanced", ""),
+    }
+
+
+def _analyze_guansi(palaces: List[Dict], day_gan: str, hour_gan: str,
+                    logic: Dict, topic: str = "官司") -> Dict[str, Any]:
+    """官司/胜负用神另法：日干为我、时干为彼，比二宫旺衰吉凶 + 干五行生克定胜负。
+    《奇门法穷》：我宫旺、彼宫衰，又我克彼，则我胜；反之则负。"""
+    _XUNSHOU = {"甲": "戊"}   # 甲遁不上盘，以值符六仪戊代（旬首近似）
+
+    def _locate(gan):
+        g = _XUNSHOU.get(gan, gan)
+        return next((p for p in palaces
+                     if p.get("di_pan") == g or p.get("stem") == g), None)
+
+    me = _locate(day_gan)       # 我方（日干）
+    other = _locate(hour_gan)   # 对方（时干）
+
+    def _pscore(p):
+        # 落宫吉凶分（score 已含门星神综合）；缺则以 quality 粗估
+        if not p:
+            return -99
+        s = p.get("score")
+        if isinstance(s, (int, float)):
+            return s
+        q = p.get("quality", "平")
+        return {"大吉": 2, "吉": 1, "平": 0, "凶": -1, "大凶": -2}.get(q, 0)
+
+    sm, so = _pscore(me), _pscore(other)
+
+    # 干五行生克（我=日干 vs 彼=时干）
+    _KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+    wx_me = _TIANGAN_WX.get(day_gan, "")
+    wx_ot = _TIANGAN_WX.get(hour_gan, "")
+    ke_rel = ""
+    if wx_me and wx_ot:
+        if _KE.get(wx_me) == wx_ot:
+            ke_rel = "我克彼"      # 利我（制得住对方）
+        elif _KE.get(wx_ot) == wx_me:
+            ke_rel = "彼克我"      # 不利（受制于人）
+        elif _WX_SHENG.get(wx_me) == wx_ot:
+            ke_rel = "我生彼"      # 泄我（耗力，略不利）
+        elif _WX_SHENG.get(wx_ot) == wx_me:
+            ke_rel = "彼生我"      # 利我（得对方之助/对方让步）
+
+    # 综合：宫位强弱差 + 生克倾向
+    edge = (sm - so)
+    if ke_rel == "我克彼":
+        edge += 1.5
+    elif ke_rel == "彼克我":
+        edge -= 1.5
+    elif ke_rel == "我生彼":
+        edge -= 0.5
+    elif ke_rel == "彼生我":
+        edge += 0.5
+
+    _is_sf = (topic == "胜负")
+    if edge >= 1.5:
+        quality = "吉"
+        verdict = ("我方占优，宜主动进取，胜算较大" if _is_sf
+                   else "我方得理得势，宜进取，胜算较大")
+    elif edge <= -1.5:
+        quality = "凶"
+        verdict = ("对方居优，我方不利，宜避其锋、另择吉时再战" if _is_sf
+                   else "对方居优，我方受制，宜守宜和，强争不利")
+    else:
+        quality = "平"
+        verdict = ("双方旗鼓相当，胜负在毫厘，宜抢占吉方吉时" if _is_sf
+                   else "双方势均，胜负未明，宜求和解或择吉时再图")
+
+    me_pname = me.get("palace_name", "未上盘") if me else "未上盘"
+    ot_pname = other.get("palace_name", "未上盘") if other else "未上盘"
+    name = (f"日干{day_gan}（我·{me_pname}）⚔ 时干{hour_gan}（彼·{ot_pname}）"
+            + (f"，{ke_rel}" if ke_rel else ""))
+
+    return {
+        "topic":   topic,
+        "name":    name,
+        "palace":  me_pname,                 # 以我方落宫为主用神宫
+        "other_palace": ot_pname,            # 对方落宫
+        "quality": quality,
+        "verdict": verdict,
+        "me_score": sm, "other_score": so, "ke_relation": ke_rel,
+        "rules":   logic.get("principle", f"{topic}以日干为我、时干为彼，比二宫旺衰吉凶定胜负。"),
+        "best":    logic.get("advanced", ""),
+    }
+
+
+def _analyze_xunren(palaces: List[Dict], hour_gan: str, logic: Dict) -> Dict[str, Any]:
+    """寻人用神：以时干为所寻之人，观其落宫门星断远近、归否。
+    《奇门法穷·寻人章》：临生门、休门、开门则近而易归；临死门、绝则凶；逢驿马、冲宫则远走他方。"""
+    _XUNSHOU = {"甲": "戊"}
+    g = _XUNSHOU.get(hour_gan, hour_gan)
+    p = next((x for x in palaces if x.get("di_pan") == g or x.get("stem") == g), None)
+
+    if not p:
+        return {
+            "topic": "寻人", "name": f"时干{hour_gan}（所寻之人·未上盘）",
+            "palace": "未上盘", "quality": "平",
+            "verdict": "所寻之人用神未明现，音讯难寻，宜另择时再占。",
+            "rules": logic.get("principle", ""), "best": logic.get("advanced", ""),
+        }
+
+    door = p.get("door", "")
+    pname = p.get("palace_name", "")
+    q0 = p.get("quality", "平")
+    _JI_MEN = ("生门", "休门", "开门")    # 三吉门
+    _XIONG_MEN = ("死门", "伤门", "惊门")
+    is_ma = ("驿马" in str(p.get("notes", "")) or p.get("is_horse"))
+
+    if any(m in door for m in _JI_MEN):
+        quality = "吉"
+        verdict = f"所寻之人临{door}于{pname}，门吉气顺，其人安好、近在可寻，不日可归或得音讯。"
+    elif "死门" in door:
+        quality = "凶"
+        verdict = f"所寻之人临死门于{pname}，主凶，恐有险厄或音讯断绝，宜速寻、报官求助。"
+    elif any(m in door for m in _XIONG_MEN):
+        quality = "凶" if "凶" in q0 else "平"
+        verdict = f"所寻之人临{door}于{pname}，其人或有惊扰阻滞、行踪不定，寻之费力。"
+    elif is_ma:
+        quality = "平"
+        verdict = f"所寻之人逢驿马于{pname}，主远行他方、动而难定，须往远处或动向上寻。"
+    else:
+        quality = "平"
+        verdict = (f"所寻之人落{pname}（{door or '无门'}），"
+                   + ("门为杜塞，其人或自隐踪迹、暂难露面，宜耐心待时。" if "杜门" in door
+                      else "气象平和，假以时日可寻。"))
+
+    return {
+        "topic":   "寻人",
+        "name":    f"时干{hour_gan}（所寻之人·{pname}临{door or '无门'}）",
+        "palace":  pname,
+        "quality": quality,
+        "verdict": verdict,
+        "rules":   logic.get("principle", "寻人以时干为所寻之人，观落宫门星断远近归否。"),
+        "best":    logic.get("advanced", ""),
     }
 
 
@@ -368,6 +606,7 @@ def analyze_qimen(layout: Dict[str, Any]) -> Dict[str, Any]:
     """
     palaces = layout["palaces"]
     question = layout.get("question", "")
+    purpose = layout.get("purpose", "")
     ck, has_classical = _load_classical()
 
     bamen_db  = ck["bamen"]
@@ -466,8 +705,34 @@ def analyze_qimen(layout: Dict[str, Any]) -> Dict[str, Any]:
     best  = [p for p in enriched if p["quality"] in ("大吉", "吉", "小吉")]
     worst = [p for p in enriched if p["quality"] in ("大凶", "凶")]
 
-    # 格局检测
+    # 格局检测：合并简单格局 + 完整 30+ 格局
     patterns = _detect_patterns(layout, enriched, ck)
+    
+    # ─── 加入 calculate_qimen 的完整格局（30+ 种）───
+    layout_patterns = layout.get("patterns", []) or []
+    existing_names = {p["name"] for p in patterns}
+    for ep in layout_patterns:
+        if ep.get("name") and ep["name"] not in existing_names:
+            # 转换 severity → level 兼容前端
+            sev = ep.get("severity", "")
+            lv_map = {
+                "auspicious_great": "大吉",
+                "auspicious": "吉",
+                "mixed": "吉凶参半",
+                "inauspicious": "凶",
+                "inauspicious_great": "大凶",
+            }
+            ep_norm = {
+                "name": ep["name"],
+                "level": lv_map.get(sev, ep.get("level", "平")),
+                "severity": sev,
+                "desc": ep.get("desc", ""),
+                "kou": ep.get("kou", ep.get("source", "")),
+                "source": ep.get("source", ""),
+                "direction": ep.get("direction", ""),
+            }
+            patterns.append(ep_norm)
+            existing_names.add(ep["name"])
 
     # 值符值使断法 (mark zhifu/zhishi)
     zhifu_palace  = next((p for p in enriched if p.get("is_zhifu")), None)
@@ -475,7 +740,23 @@ def analyze_qimen(layout: Dict[str, Any]) -> Dict[str, Any]:
     zhifu_analysis = _analyze_zhifu_zhishi(enriched, ck)
 
     # 用神分析
-    yong_shen = _analyze_yong_shen(enriched, question, ck)
+    yong_shen = _analyze_yong_shen(enriched, question, ck, purpose,
+                                   day_gan=layout.get("day_gan", "") or "",
+                                   hour_gan=layout.get("hour_gan", "") or "")
+
+    # 用神落宫多维断语（门×星×神×旺衰×神煞），深化用神之断
+    # 官司/胜负/寻人自有专断（日干vs时干/时干远近），故仅对门星神类用神合成。
+    if yong_shen.get("topic") not in ("官司", "胜负", "寻人"):
+        try:
+            from core.qimen.yongshen_judgment import synthesize_yongshen_judgment
+            _yp = next((p for p in enriched
+                        if p.get("palace_name") == yong_shen.get("palace")), None)
+            _yj = synthesize_yongshen_judgment(yong_shen, _yp, yong_shen.get("topic", ""))
+            if _yj.get("paragraph"):
+                yong_shen["judgment_dimensions"] = _yj["dimensions"]
+                yong_shen["judgment"] = _yj["paragraph"]
+        except Exception as _e1:
+            from core.log import log_failure; log_failure("qimen", "装配(自动补充日志)", _e1)
 
     # 应期推算
     timing = _analyze_timing(zhifu_palace, zhishi_palace, ck)

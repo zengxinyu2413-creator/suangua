@@ -126,18 +126,45 @@ def yarrow_divination() -> Dict[str, Any]:
 
 def time_divination(dt: Optional[datetime] = None) -> Dict[str, Any]:
     """
-    Time-based divination using year/month/day/hour.
-    Upper trigram number = (y+m+d) % 8 or 8
-    Lower trigram number = (y+m+d+h) % 8 or 8
-    Changing line = (y+m+d+h) % 6 or 6
+    Time-based divination (梅花易数·时间起卦法).
+    
+    古书《梅花易数》正法 — 用农历年支序、农历月、农历日、时辰序：
+      上卦数 = (年支序 + 农历月 + 农历日) % 8 (0 取 8)
+      下卦数 = (年支序 + 农历月 + 农历日 + 时辰序) % 8 (0 取 8)
+      动爻数 = (年支序 + 农历月 + 农历日 + 时辰序) % 6 (0 取 6)
+    
+    年支序：子1、丑2、寅3、卯4、辰5、巳6、午7、未8、申9、酉10、戌11、亥12
+    时辰序：子1、丑2、寅3、卯4、辰5、巳6、午7、未8、申9、酉10、戌11、亥12
+    
+    （旧版用公历年/24小时制，是误用；古书严格按农历干支起卦。）
     """
     if dt is None:
         dt = datetime.now()
-    y, m, d, h = dt.year, dt.month, dt.day, dt.hour
+    
+    # 用农历 + 时辰序号（古法）
+    try:
+        from lunar_python import Solar
+        sol = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute or 0, 0)
+        lunar = sol.getLunar()
+        year_branch = lunar.getYearZhi()
+        # 年支 → 序数（子1...亥12）
+        ZHI_ORDER = "子丑寅卯辰巳午未申酉戌亥"
+        y_num = ZHI_ORDER.index(year_branch) + 1
+        m = abs(lunar.getMonth())  # 农历月（处理闰月）
+        d = lunar.getDay()
+        # 时辰序：23-1 子时=1, 1-3 丑=2, ..., 21-23 亥=12
+        # 公式：((hour + 1) // 2) % 12 + 1，但 23 时归子时
+        if dt.hour == 23:
+            h_num = 1
+        else:
+            h_num = ((dt.hour + 1) // 2) % 12 + 1
+    except Exception:
+        # 回退到公历（仅当 lunar-python 不可用）
+        y_num, m, d, h_num = dt.year, dt.month, dt.day, dt.hour or 1
 
-    upper_num = (y + m + d) % 8 or 8
-    lower_num = (y + m + d + h) % 8 or 8
-    change_pos = (y + m + d + h) % 6 or 6  # 1-based
+    upper_num = (y_num + m + d) % 8 or 8
+    lower_num = (y_num + m + d + h_num) % 8 or 8
+    change_pos = (y_num + m + d + h_num) % 6 or 6  # 1-based
 
     # Find trigram names by King-Wen number
     from core.constants import KING_WEN_TRIGRAM
@@ -199,10 +226,28 @@ def _make_result(method: str, yaos: List[YaoType]) -> Dict[str, Any]:
             "description": line_data,
         })
 
+    # ── 六合/六冲/游魂/归魂 卦型判断 ─────────────────────────────────────────
+    # 六合卦: 各爻地支两两相合 (需annotate_with_najia后才可完整判断, 此处占卦型)
+    # 游魂卦 / 归魂卦: 由八宫分类中的宫位决定 (position 7=游魂, 8=归魂)
+    from core.liuyao.najia import HEXAGRAM_PALACE
+    palace_info = HEXAGRAM_PALACE.get(orig_num, ("", 0))
+    palace_name, palace_pos = palace_info
+    palace_pos_name = {
+        1: "八纯卦", 2: "一变卦", 3: "二变卦", 4: "三变卦",
+        5: "四变卦", 6: "五变卦", 7: "游魂卦", 8: "归魂卦",
+    }.get(palace_pos, "")
+
+    # 六合/六冲 detection from branch pairs (requires najia annotation first)
+    # Mark as pending — will be set by annotate_with_najia
+    hex_type = palace_pos_name  # will be enriched after najia annotation
+
     return {
-        "method":         method,
-        "original":       original,
-        "changed":        changed,
-        "changing_lines": changing_lines,
-        "yaos":           yao_details,
+        "method":           method,
+        "original":         original,
+        "changed":          changed,
+        "changing_lines":   changing_lines,
+        "yaos":             yao_details,
+        "hex_type":         hex_type,
+        "palace_name":      str(palace_name),
+        "palace_position":  palace_pos,
     }

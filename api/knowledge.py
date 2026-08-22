@@ -405,6 +405,25 @@ async def foundations_canggan():
     data = {zhi: info["藏干"] for zhi, info in DIZHI.items()}
     return ApiResponse(success=True, data=data)
 
+
+# ═══════════════════════════════════════════════════════════
+# 典籍精读专题（10 大命理学典籍详细内容）
+# ═══════════════════════════════════════════════════════════
+
+@router.get("/compendium/list", summary="典籍精读 — 全部典籍列表")
+async def compendium_list():
+    from knowledge.classical_compendium import get_compendium_list
+    return ApiResponse(success=True, data=get_compendium_list())
+
+
+@router.get("/compendium/{book_id}", summary="典籍精读 — 单本详细内容")
+async def compendium_detail(book_id: str):
+    from knowledge.classical_compendium import get_compendium_detail
+    d = get_compendium_detail(book_id)
+    if not d:
+        raise HTTPException(status_code=404, detail=f"未找到典籍 ID: {book_id}")
+    return ApiResponse(success=True, data=d)
+
 # ═══════════════════════════════════════════════════════════
 # 十神·神煞·六亲知识库
 # ═══════════════════════════════════════════════════════════
@@ -717,3 +736,23 @@ async def classical_meihua_qigua():
 async def classical_liuyao_yingqi_full():
     from knowledge.classical_knowledge import LIUYAO_YINGQI_FULL
     return ApiResponse(success=True, data=LIUYAO_YINGQI_FULL)
+
+
+@router.get("/yijing-graph", summary="易经知识图谱数据")
+async def yijing_graph():
+    """Return the complete I Ching knowledge graph for 3D visualization."""
+    from knowledge.yijing_graph import build_graph
+    return ApiResponse(success=True, data=build_graph())
+
+
+@router.get("/daily-guardian", summary="每日守护 — 综合日历推送")
+async def daily_guardian(date: str = None):
+    """Generate comprehensive daily metaphysics report."""
+    from core.daily_guardian import generate_daily_report
+    from datetime import date as D
+    try:
+        d = D.fromisoformat(date) if date else D.today()
+        report = generate_daily_report(d)
+        return ApiResponse(success=True, data=report)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

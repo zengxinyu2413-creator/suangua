@@ -68,6 +68,15 @@ class ClassicalRAG:
                 continue
             try:
                 mod = importlib.import_module(f"knowledge.{info.name}")
+                # Check for explicit chunk generator (e.g. get_all_deep_chunks)
+                chunk_fn = getattr(mod, "get_all_deep_chunks", None)
+                if callable(chunk_fn):
+                    for chunk in chunk_fn():
+                        text = chunk.get("content", "").strip()
+                        if text and text not in seen:
+                            seen.add(text)
+                            corpus.append((chunk.get("source", info.name), text))
+                # Also harvest raw module attributes
                 for attr in dir(mod):
                     if attr.startswith("_"):
                         continue
@@ -102,10 +111,51 @@ class ClassicalRAG:
         """
         self._ensure_built()
         import jieba
+        import numpy as np
 
         jieba.setLogLevel("ERROR")
-        tokens = list(jieba.cut(query))
-        scores = self._bm25.get_scores(tokens)
+
+        # ── Synonym expansion for classical metaphysics terms ──────────────
+        _SYNONYMS: Dict[str, List[str]] = {
+            "用神":    ["用神", "喜用", "取用", "忌神", "调候"],
+            "格局":    ["格局", "格", "正格", "变格", "外格"],
+            "日主":    ["日主", "日干", "日元", "我"],
+            "四化":    ["四化", "飞化", "化禄", "化权", "化科", "化忌"],
+            "飞星":    ["飞星", "紫白", "九星", "年飞星", "流年飞星"],
+            "六爻":    ["六爻", "纳甲", "卜筮", "摇卦"],
+            "用神取法":["用神", "取用", "用神取法", "用神喜忌"],
+            "世爻":    ["世爻", "世", "世应"],
+            "应爻":    ["应爻", "应", "世应"],
+            "旺相":    ["旺相", "旺衰", "当令", "得令", "失令"],
+            "空亡":    ["空亡", "旬空", "截空"],
+            "大限":    ["大限", "小限", "大运", "流年", "运程"],
+            "三方":    ["三方四正", "三合", "命迁财官"],
+            "真太阳时":["真太阳时", "地方时", "经度修正"],
+            "调候":    ["调候", "调候用神", "穷通宝鉴"],
+            "伏吟":    ["伏吟", "反伏吟", "反吟"],
+        }
+
+        # Expand query terms
+        expanded_queries = [query]
+        query_lower = query
+        for key, synonyms in _SYNONYMS.items():
+            if key in query_lower:
+                expanded_queries.append(" ".join(synonyms))
+
+        # Multi-query BM25: take element-wise max across all query expansions
+        scores = None
+        for eq in expanded_queries[:3]:  # cap at 3 expansions
+            tokens = [t for t in jieba.cut(eq) if len(t) > 1]
+            if not tokens:
+                tokens = list(jieba.cut(eq))
+            eq_scores = self._bm25.get_scores(tokens)
+            if scores is None:
+                scores = eq_scores
+            else:
+                scores = np.maximum(scores, eq_scores)
+
+        if scores is None:
+            scores = [0.0] * len(self._corpus)
 
         # Build sorted results
         indexed = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)

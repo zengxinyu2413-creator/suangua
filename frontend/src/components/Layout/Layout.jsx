@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { systemApi } from '../../api/client'
 import { useSettingsStore } from '../../store/settingsStore'
+import TaijiBg from '../TaijiBg'
 import './Layout.css'
 
 const NAV = [
@@ -36,13 +37,16 @@ export default function Layout({ children }) {
 
   return (
     <div className="app-shell">
+      {/* ── Taiji yin-yang rotating watermark ── */}
+      <TaijiBg />
+
       {/* ── Top Navigation Bar ── */}
       <header className="topnav">
         {/* Left: Brand */}
         <div className="topnav-brand">
           <span className="brand-glyph">☯</span>
           <div className="brand-text">
-            <span className="brand-name">八卦推演</span>
+            <span className="brand-name">中国术数平台</span>
             <span className="brand-tagline">Chinese Metaphysics</span>
           </div>
         </div>

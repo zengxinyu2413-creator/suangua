@@ -1,5 +1,5 @@
 # =============================================================================
-# start.ps1 — 八卦推演 One-click launcher for Windows (PowerShell)
+# start.ps1 — 中国术数平台 One-click launcher for Windows (PowerShell)
 # =============================================================================
 # Usage (open PowerShell in this folder):
 #   .\start.ps1           — start both backend + frontend

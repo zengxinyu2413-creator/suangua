@@ -1,0 +1,226 @@
+/* ============================================================
+   盘式设计语言 — 留白版 (scoped under .gv-plate)
+   不污染全局主题；各模块传统盘式复用此文件。
+   白底留白 · 细线收边 · 五行配色 · 印章定论
+   ============================================================ */
+.gv-plate{
+  --gv-ink:#2a2720; --gv-ink-2:#5c594f; --gv-ink-3:#928e84; --gv-ink-4:#c2bdb2;
+  --gv-vermilion:#cf3b2c;
+  --gv-hair:rgba(34,32,26,0.08); --gv-hair-2:rgba(34,32,26,0.14);
+  --gv-mu:#2f8f63; --gv-huo:#cf5132; --gv-tu:#c1953a; --gv-jin:#8a8475; --gv-shui:#3a7ab5;
+  color:var(--gv-ink);
+  font-family:var(--font-sans,'Noto Sans SC',sans-serif);
+  line-height:1.7;
+}
+.gv-wx-mu{color:var(--gv-mu);}  .gv-wx-huo{color:var(--gv-huo);}
+.gv-wx-tu{color:var(--gv-tu);}  .gv-wx-jin{color:var(--gv-jin);}
+.gv-wx-shui{color:var(--gv-shui);}
+
+/* 章首印石 */
+.gv-seal{display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;background:var(--gv-vermilion);color:#fff;
+  font-family:var(--font-serif,'Noto Serif SC',serif);font-weight:600;font-size:18px;position:relative;flex-shrink:0;}
+.gv-seal::after{content:'';position:absolute;inset:4px;border:0.5px solid rgba(255,255,255,0.3);}
+.gv-sec-bar{display:flex;align-items:center;gap:14px;margin-bottom:30px;}
+.gv-sec-bar .t{font-family:var(--font-serif,serif);font-size:15px;font-weight:600;letter-spacing:0.03em;}
+.gv-sec-bar .cap{margin-left:auto;font-size:11px;font-weight:500;letter-spacing:0.18em;color:var(--gv-ink-3);}
+
+/* ── 八字四柱：左行标 + 四柱对齐列，无边框无色块 ── */
+.gv-sizhu{display:grid;grid-template-columns:46px repeat(4,1fr);align-items:center;}
+.gv-sz-lbl{font-size:11px;letter-spacing:0.14em;color:var(--gv-ink-4);text-align:right;padding-right:16px;}
+.gv-sz-ph{text-align:center;font-size:12px;font-weight:500;letter-spacing:0.2em;color:var(--gv-ink-3);
+  padding:0 6px 12px;border-bottom:1px solid var(--gv-hair);}
+.gv-sz-ph.day{color:var(--gv-vermilion);box-shadow:inset 0 -2px 0 var(--gv-vermilion);}
+.gv-sz-c{text-align:center;font-size:14px;font-family:var(--font-serif,serif);color:var(--gv-ink-2);padding:9px 6px;}
+.gv-sz-c.gan,.gv-sz-c.zhi{font-size:40px;font-weight:600;line-height:1.12;}
+.gv-sz-c.gan{padding-top:14px;padding-bottom:2px;}
+.gv-sz-c.zhi{padding-top:2px;padding-bottom:13px;}
+.gv-sz-c.ss{font-size:12px;letter-spacing:0.04em;}
+.gv-sz-c.dim{color:var(--gv-ink-3);font-size:13px;}
+@media (max-width:480px){
+  .gv-sizhu{grid-template-columns:32px repeat(4,1fr);}
+  .gv-sz-lbl{font-size:9px;padding-right:6px;letter-spacing:0.04em;}
+  .gv-sz-c.gan,.gv-sz-c.zhi{font-size:26px;}
+  .gv-sz-c{font-size:11px;padding:6px 2px;}
+  .gv-sz-c.ss{font-size:10px;}
+  .gv-sz-ph{font-size:10px;letter-spacing:0.08em;padding:0 2px 8px;}
+  .gv-sz-c.shensha{font-size:9px;}
+}
+.gv-sz-c.shensha{font-size:10px;color:var(--gv-ink-3);line-height:1.6;}
+.gv-sz-c .gv-day-em{color:var(--gv-vermilion);}
+.gv-wxg{font-size:10px;color:var(--gv-ink-4);letter-spacing:0.08em;}
+
+/* ── 综断区 ── */
+.gv-verdict{margin-top:40px;display:grid;grid-template-columns:1fr 168px;gap:40px;align-items:start;}
+@media (max-width:720px){.gv-verdict{grid-template-columns:1fr;gap:24px;}}
+.gv-vb-h{font-family:var(--font-serif,serif);font-size:15px;font-weight:600;margin-bottom:9px;}
+.gv-vb-h .em{color:var(--gv-vermilion);}
+.gv-vb p{font-family:var(--font-serif,serif);font-size:13.5px;color:var(--gv-ink-2);line-height:1.95;max-width:44ch;}
+.gv-wd-cap{font-size:11px;letter-spacing:0.18em;color:var(--gv-ink-3);margin-bottom:12px;}
+.gv-wd-row{display:grid;grid-template-columns:16px 1fr 20px;align-items:center;gap:9px;margin-bottom:8px;font-size:13px;}
+.gv-wd-row .nm{font-family:var(--font-serif,serif);}
+.gv-wd-track{height:3px;background:var(--gv-hair);position:relative;}
+.gv-wd-fill{height:3px;position:absolute;left:0;top:0;}
+.gv-wd-row .vl{font-family:var(--font-mono,monospace);font-size:11px;color:var(--gv-ink-3);text-align:right;}
+
+/* ── 六爻竖梯：本卦｜变卦并列，无边框，细线分行 ── */
+.gv-ladder-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:start;}
+@media (max-width:640px){.gv-ladder-wrap{grid-template-columns:1fr;gap:0;}}
+.gv-gua-cap{font-family:var(--font-serif,serif);font-weight:600;font-size:14px;margin-bottom:10px;
+  padding-bottom:8px;border-bottom:1px solid var(--gv-hair-2);display:flex;align-items:baseline;gap:8px;}
+.gv-gua-cap .gong{font-size:11px;color:var(--gv-ink-3);font-weight:400;letter-spacing:0.04em;}
+.gv-yao-row{display:grid;grid-template-columns:32px 1fr 52px 20px;align-items:center;gap:8px;
+  padding:9px 2px;border-bottom:1px solid var(--gv-hair);position:relative;}
+.gv-yao-row:last-child{border-bottom:none;}
+.gv-yao-row.yong{box-shadow:inset 3px 0 0 var(--gv-vermilion);padding-left:8px;}
+.gv-ys{font-size:10px;color:var(--gv-ink-4);text-align:center;letter-spacing:0.04em;}
+.gv-yq-wrap{display:flex;flex-direction:column;gap:1px;}
+.gv-yq{font-family:var(--font-serif,serif);font-size:14px;color:var(--gv-ink-2);display:flex;align-items:baseline;gap:6px;}
+.gv-yq .qin{font-weight:600;color:var(--gv-ink);}
+.gv-yq .gz{font-size:14px;}
+.gv-yq .kong{font-size:10px;color:var(--gv-vermilion);}
+.gv-ws{font-size:10px;color:var(--gv-ink-4);letter-spacing:0.02em;}
+.gv-fu{font-size:10px;color:var(--gv-tu);margin-top:1px;}
+.gv-yline{display:flex;gap:6px;align-items:center;height:14px;}
+.gv-yline span{display:block;height:6px;background:var(--gv-ink);}
+.gv-yline.yang span{width:44px;}
+.gv-yline.yin span{width:19px;}
+.gv-yao-row.dong .gv-yline span{background:var(--gv-vermilion);}
+.gv-mark{font-size:11px;font-weight:700;text-align:center;color:var(--gv-ink-3);}
+.gv-mark.shi{color:var(--gv-vermilion);}
+.gv-mark.ying{color:var(--gv-ink-2);}
+.gv-mark.dong{color:var(--gv-vermilion);}
+.gv-ladder-axis{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding-top:34px;gap:6px;color:var(--gv-ink-4);font-size:11px;letter-spacing:0.04em;}
+.gv-ladder-axis .arrow{font-size:18px;color:var(--gv-vermilion);}
+.gv-changed-tag{font-size:12px;color:var(--gv-ink-3);}
+.gv-changed-tag .qin{color:var(--gv-vermilion);font-weight:600;}
+
+/* ── 紫微命格印 + 三方四正卡 ── */
+.gv-grade-seal{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  width:64px;height:64px;background:var(--gv-vermilion);color:#fff;position:relative;
+  transform:rotate(-2deg);flex-shrink:0;}
+.gv-grade-seal::after{content:'';position:absolute;inset:4px;border:1px solid rgba(255,255,255,0.35);}
+.gv-grade-seal .gg{font-family:var(--font-serif,serif);font-size:18px;font-weight:700;line-height:1.1;}
+.gv-grade-seal .gs{font-size:9px;letter-spacing:0.2em;margin-top:2px;opacity:0.85;}
+.gv-zw-hero{display:flex;align-items:center;gap:20px;}
+.gv-zw-hero .txt{flex:1;min-width:0;}
+.gv-zw-hero .sc{font-size:11px;color:var(--gv-ink-3);font-family:var(--font-mono,monospace);margin-bottom:3px;}
+.gv-zw-hero .sm{font-size:13px;color:var(--gv-ink-2);line-height:1.7;font-family:var(--font-serif,serif);}
+.gv-zw-hero .tags{margin-top:6px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;}
+.gv-zw-hero .tags .good{color:var(--gv-mu);}
+.gv-zw-hero .tags .bad{color:var(--gv-vermilion);}
+
+.gv-sfsz-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+@media (max-width:640px){.gv-sfsz-grid{grid-template-columns:repeat(2,1fr);}}
+.gv-sfsz-cell{position:relative;padding-top:11px;}
+.gv-sfsz-cell .bar{position:absolute;top:0;left:0;width:22px;height:2px;}
+.gv-sfsz-cell .nm{font-size:10px;color:var(--gv-ink-3);letter-spacing:0.04em;}
+.gv-sfsz-cell .st{font-family:var(--font-serif,serif);font-size:15px;font-weight:600;margin:5px 0 7px;color:var(--gv-ink);line-height:1.25;}
+.gv-sfsz-cell .st.empty{color:var(--gv-ink-4);font-weight:400;}
+.gv-sfsz-cell .ln{display:flex;justify-content:space-between;align-items:baseline;}
+.gv-sfsz-cell .gd{font-size:10px;letter-spacing:0.04em;}
+.gv-sfsz-cell .sc{font-family:var(--font-mono,monospace);font-size:11px;color:var(--gv-ink-3);}
+
+/* ── 奇门九宫：白盘 + 顶部质量色条，无背景色块 ── */
+.gv-jg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--gv-hair);
+  max-width:520px;margin:0 auto;border:1px solid var(--gv-hair);}
+.gv-jg-cell{background:#fff;padding:10px 9px 8px;min-height:112px;cursor:pointer;position:relative;
+  display:flex;flex-direction:column;gap:3px;transition:box-shadow 0.15s;}
+.gv-jg-cell.center{background:var(--gv-verm-soft-bg,#fdf6f4);}
+.gv-jg-cell.selected{box-shadow:inset 0 0 0 2px var(--gv-vermilion);}
+.gv-jg-cell:hover{box-shadow:inset 0 0 0 1px var(--gv-ink-4);}
+.gv-jg-cell.selected:hover{box-shadow:inset 0 0 0 2px var(--gv-vermilion);}
+.gv-jg-cell:focus-visible{outline:2px solid var(--gv-vermilion);outline-offset:-2px;}
+@media (max-width:480px){
+  .gv-jg-cell{min-height:84px;padding:6px 5px 5px;gap:1px;}
+  .gv-jg-star{font-size:12px;}
+  .gv-jg-door{font-size:10px;}
+  .gv-jg-dir{font-size:9px;}
+  .gv-jg-tag{font-size:8px;padding:0 3px;}
+  .gv-jg-gan .tian{font-size:11px;}
+  .gv-jg-gan .di{font-size:12px;}
+  .gv-jg-gan .lbl{font-size:8px;}
+  .gv-jg-deity{font-size:9px;}
+}
+.gv-jg-cell .bar{position:absolute;top:0;left:0;right:0;height:2px;}
+.gv-jg-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.gv-jg-dir{font-size:10px;color:var(--gv-ink-4);font-family:var(--font-mono,monospace);letter-spacing:0.04em;}
+.gv-jg-tags{display:flex;gap:3px;}
+.gv-jg-tag{font-size:9px;padding:1px 4px;font-weight:700;color:#fff;}
+.gv-jg-tag.zf{background:var(--gv-vermilion);}
+.gv-jg-tag.zs{background:var(--gv-shui);}
+.gv-jg-star{font-family:var(--font-serif,serif);font-weight:600;font-size:14px;color:var(--gv-ink);}
+.gv-jg-door{font-size:12px;color:var(--gv-ink-2);font-weight:500;}
+.gv-jg-gan{display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;margin:2px 0;}
+.gv-jg-gan .lbl{font-size:9px;color:var(--gv-ink-4);}
+.gv-jg-gan .tian{font-size:14px;font-weight:600;}
+.gv-jg-gan .di{font-size:15px;font-weight:500;}
+.gv-jg-deity{font-size:11px;color:var(--gv-ink-3);margin-top:auto;}
+
+/* ── 玄空九宫：白盘 + 山向运三星分层 ── */
+.gv-xk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--gv-hair);
+  max-width:460px;margin:0 auto;border:1px solid var(--gv-hair);}
+.gv-xk-cell{background:#fff;aspect-ratio:1;padding:8px;position:relative;
+  display:flex;flex-direction:column;}
+.gv-xk-cell.mark{box-shadow:inset 0 0 0 2px var(--gv-vermilion);}
+.gv-xk-cell.warn5::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;background:var(--gv-vermilion);border-radius:50%;}
+.gv-xk-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.gv-xk-dir{font-size:10px;color:var(--gv-ink-3);font-family:var(--font-serif,serif);}
+.gv-xk-tag{font-size:9px;font-weight:700;color:#fff;background:var(--gv-vermilion);padding:1px 4px;}
+.gv-xk-stars{flex:1;display:grid;grid-template-rows:1fr 1fr;grid-template-columns:1fr 1fr;
+  gap:2px;align-items:center;justify-items:center;}
+.gv-xk-star{font-family:var(--font-serif,serif);font-weight:700;font-size:19px;position:relative;}
+.gv-xk-star .ling{position:absolute;top:-5px;right:-10px;font-size:9px;color:var(--gv-mu);font-weight:700;}
+.gv-xk-yun{grid-column:1/3;font-family:var(--font-serif,serif);font-weight:500;font-size:12px;opacity:0.7;}
+@media (max-width:480px){
+  .gv-xk-cell{padding:5px;}
+  .gv-xk-star{font-size:14px;}
+  .gv-xk-yun{font-size:10px;}
+  .gv-xk-dir{font-size:9px;}
+  .gv-xk-tag{font-size:8px;padding:0 3px;}
+}
+
+/* ── 择日通书条目 ── */
+.gv-almanac-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;padding-bottom:12px;
+  border-bottom:1px solid var(--gv-hair-2);}
+.gv-almanac-head .dt{font-family:var(--font-serif,serif);font-size:20px;font-weight:700;}
+.gv-almanac-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.gv-almanac-tag{font-size:11px;padding:2px 9px;border:1px solid currentColor;font-family:var(--font-serif,serif);}
+.gv-almanac-list{display:flex;flex-direction:column;gap:6px;}
+.gv-almanac-item{display:flex;gap:8px;font-size:13px;font-family:var(--font-serif,serif);
+  color:var(--gv-ink-2);line-height:1.75;}
+.gv-almanac-item .mk{flex-shrink:0;font-weight:700;}
+.gv-almanac-item .mk.yi{color:var(--gv-mu);}
+.gv-almanac-item .mk.ji{color:var(--gv-vermilion);}
+.gv-almanac-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--gv-hair);}
+.gv-almanac-note .lbl{font-size:11px;font-weight:700;letter-spacing:0.06em;margin-bottom:5px;}
+.gv-almanac-note .lbl.good{color:var(--gv-mu);}
+.gv-almanac-note .lbl.bad{color:var(--gv-vermilion);}
+.gv-almanac-note .row{font-size:12px;font-family:var(--font-serif,serif);color:var(--gv-ink-2);line-height:1.7;}
+.gv-almanac-note .row .nm{font-weight:600;}
+.gv-almanac-note .row .nm.good{color:var(--gv-mu);}
+.gv-almanac-note .row .nm.bad{color:var(--gv-vermilion);}
+.gv-almanac-note .row .lv{color:var(--gv-ink-4);font-size:11px;}
+
+/* ── 阳宅门主灶生成链 ── */
+.gv-yz-chain{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:10px;}
+@media (max-width:640px){.gv-yz-chain{grid-template-columns:1fr;}
+  .gv-yz-arrow{transform:rotate(90deg);margin:4px 0;}}
+.gv-yz-cell{text-align:center;padding:14px 8px;}
+.gv-yz-cell .k{font-size:11px;color:var(--gv-ink-3);letter-spacing:0.1em;margin-bottom:6px;}
+.gv-yz-cell .gua{font-family:var(--font-serif,serif);font-size:26px;font-weight:700;color:var(--gv-ink);line-height:1;}
+.gv-yz-cell .dir{font-size:11px;color:var(--gv-ink-3);margin-top:6px;}
+.gv-yz-cell .grp{font-size:10px;margin-top:3px;font-weight:600;}
+.gv-yz-cell .person{font-size:10px;color:var(--gv-ink-4);margin-top:2px;}
+.gv-yz-arrow{text-align:center;color:var(--gv-ink-4);font-size:16px;}
+.gv-yz-rels{margin-top:18px;display:flex;flex-direction:column;gap:8px;}
+.gv-yz-rel{display:grid;grid-template-columns:70px 1fr;gap:12px;align-items:start;padding:9px 0;border-top:1px solid var(--gv-hair);}
+.gv-yz-rel .lbl{font-size:11px;color:var(--gv-ink-3);}
+.gv-yz-rel .star{font-family:var(--font-serif,serif);font-weight:700;font-size:14px;}
+.gv-yz-rel .jx{font-size:10px;color:var(--gv-ink-4);margin-top:1px;}
+.gv-yz-rel .jd{font-size:12px;font-family:var(--font-serif,serif);color:var(--gv-ink-2);line-height:1.7;}
+.gv-yz-purity{margin-top:16px;padding-top:14px;border-top:1px solid var(--gv-hair-2);
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:12px;}
+.gv-yz-purity .stamp{font-family:var(--font-serif,serif);font-weight:700;font-size:13px;}
+.gv-yz-purity .desc{font-size:11px;color:var(--gv-ink-3);width:100%;margin-top:4px;}

@@ -13,6 +13,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    cssMinify: false,
     rollupOptions: {
       output: {
         manualChunks: (id) => {

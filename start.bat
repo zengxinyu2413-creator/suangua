@@ -359,7 +359,7 @@ set "FHELPER=%TEMP%\bagua_run_frontend.bat"
     echo npm run dev -- --host 0.0.0.0 ^>^>"!FRONTEND_LOG!" 2^>^&1
 ) > "!FHELPER!"
 
-start "bagua-frontend" /b "!FHELPER!"
+start "chinese-metaphysics-frontend" /b "!FHELPER!"
 
 timeout /t 4 /nobreak >nul
 for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":!FRONTEND_PORT! " ^| findstr "LISTENING"') do (
